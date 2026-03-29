@@ -419,7 +419,8 @@ const ProposalDetails: React.FC = () => {
   const decisionReviewerAlreadySubmitted = isReviewer1 && (
     statusIs(proposal.status, "contract_issued", "approved", "locked", "awaiting_author_approval", "author_approved", "declined", "rejected", "queries_raised", "awaiting_more_info") || 
     hasDecisionReviewInApi ||
-    hasContractInSystem
+    hasContractInSystem ||
+    hasInfoRequestHistory
   );
 
 
