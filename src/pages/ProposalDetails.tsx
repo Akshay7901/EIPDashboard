@@ -944,6 +944,46 @@ const ProposalDetails: React.FC = () => {
 
           {/* ---- FEEDBACK & CONTRACT (Decision Reviewer) ---- */}
           <TabsContent value="feedback" className="mt-4 space-y-4">
+            {/* Prominent action banner when author responded and no contract sent */}
+            {isReviewer1 && !latestContract && !pendingInfoRequest && infoRequests.some((r) => r.status === 'responded') && (
+              <Card className="border-2 border-[#c4940a]/50 bg-[#c4940a]/5">
+                <CardContent className="pt-5 pb-5">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <div className="flex items-start gap-3 flex-1">
+                      <div className="shrink-0 mt-0.5">
+                        <CheckCircle2 className="h-6 w-6 text-[#c4940a]" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground">Author Has Responded — Next Steps</p>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          The author has provided the requested information. You can now send a contract or request additional information.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <Button
+                        className="bg-[#2f4b40] hover:bg-[#2f4b40] hover:opacity-90 text-white gap-2"
+                        onClick={() => {
+                          const ct = getDefaultContractType(proposal?.book_type);
+                          setStandaloneSendContractType(ct);
+                          setStandaloneSendContractFields(getDefaultContractFields(ct, proposedTitle || proposal?.name || '', proposedSubtitle || proposal?.sub_title || ''));
+                          setStandaloneSendContractOpen(true);
+                        }}
+                      >
+                        <Send className="h-4 w-4" /> Send Contract
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => navigate(`/proposals/${ticketNum}/request-info`)}
+                      >
+                        <Info className="h-4 w-4" /> Request More Info
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             {/* Info Request History & Author Response Actions */}
             {isReviewer1 && infoRequests.length > 0 && (
               <div className="space-y-4">
