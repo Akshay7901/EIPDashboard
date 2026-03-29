@@ -456,8 +456,8 @@ const ProposalDetails: React.FC = () => {
                 </span>
               </div>
           }
-            {/* Submitted date */}
-            {proposal.created_at &&
+            {/* Submitted date - shown in post-submission state */}
+            {isPostSubmission && proposal.created_at &&
           <p className="text-sm text-muted-foreground mt-1">
                 Submitted {format(new Date(proposal.created_at), "MMMM d, yyyy")}
               </p>
@@ -465,7 +465,7 @@ const ProposalDetails: React.FC = () => {
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
             <ProposalStatusBadge status={proposal.status} showIcon={false} />
-            {proposal.contract_sent_at &&
+            {isPostSubmission && proposal.contract_sent_at &&
           <span className="text-sm text-muted-foreground">
                 {format(new Date(proposal.contract_sent_at), "do MMMM yyyy")}
               </span>
@@ -478,23 +478,44 @@ const ProposalDetails: React.FC = () => {
           }
           </div>
         </div>
-        {/* Author info - consistent display */}
-        <div className="flex items-center gap-2 mt-3 flex-wrap">
-          <div className="flex items-center gap-2 border rounded-full px-3 py-1.5 text-sm">
-            <User className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">
+        {/* Author & reviewer info */}
+        {isPostSubmission ?
+      <div className="flex items-center gap-2 mt-3">
+            <div className="flex items-center gap-2 border rounded-full px-3 py-1.5 text-sm">
+              <User className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">
+                {proposal.corresponding_author_name || proposal.author_name}
+              </span>
+            </div>
+            {isReviewer1 && !statusIs(proposal.status, "locked", "declined", "rejected") && (
+              decisionReviewerPostSubmission || 
+              hasSubmittedReview || 
+              !(statusIs(proposal.status, "new", "submitted", "in_review", "under_review", "awaiting_more_info", "review_returned"))
+            ) && (
+              <Button variant="outline" onClick={() => setIsDeclineDialogOpen(true)} disabled={isBusy}>
+                Decline
+              </Button>
+            )}
+          </div> :
+
+      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-3">
+            <span className="font-medium text-foreground">
               {proposal.corresponding_author_name || proposal.author_name}
             </span>
+            {proposal.institution && <>
+                <span>•</span>
+                <span>{proposal.institution}</span>
+              </>}
+            {proposal.word_count && <>
+                <span>•</span>
+                <span>{proposal.word_count} words</span>
+              </>}
           </div>
-          {proposal.institution && <span className="text-sm text-muted-foreground">• {proposal.institution}</span>}
-          {proposal.word_count && <span className="text-sm text-muted-foreground">• {proposal.word_count} words</span>}
-        </div>
+      }
       </div>
       {/* Reviewer + Actions row (for reviewer_1 only, hide once review is returned) */}
-      {/* Unified action bar for DR - consistent across all statuses */}
-      {isReviewer1 && !statusIs(proposal.status, "declined", "rejected", "locked") && <div className="flex items-center gap-3 flex-wrap">
-          {/* Reviewer selector - pre-submission only */}
-          {!decisionReviewerPostSubmission && !hasSubmittedReview && reviewers.length > 0 && <>
+      {isReviewer1 && !decisionReviewerPostSubmission && !hasSubmittedReview && !statusIs(proposal.status, "declined", "rejected") && (statusIs(proposal.status, "new", "submitted") || statusIs(proposal.status, "in_review", "under_review") || statusIs(proposal.status, "awaiting_more_info", "review_returned")) && <div className="flex items-center gap-3 flex-wrap">
+          {reviewers.length > 0 && <>
               <UserCircle className="h-5 w-5 text-muted-foreground" />
               <Select value={selectedReviewer} onValueChange={setSelectedReviewer}>
                 <SelectTrigger className="w-56 bg-background">
@@ -510,56 +531,22 @@ const ProposalDetails: React.FC = () => {
               </Select>
             </>}
 
-          {/* Submit for Review - new/submitted only */}
-          {!decisionReviewerPostSubmission && !hasSubmittedReview && statusIs(proposal.status, "new", "submitted") && <Button className="bg-[#3d5a47]" onClick={() => {
-            setAssignNote("");
-            setIsAssignDialogOpen(true);
-          }} disabled={isAssigning}>
-            Submit for review
-          </Button>}
-
-          {/* Reassign - under review only */}
-          {!decisionReviewerPostSubmission && !hasSubmittedReview && statusIs(proposal.status, "in_review", "under_review") && (() => {
-            const assignedEmails = (proposal as any)?.assigned_reviewer_emails ||
-            proposal?.assigned_reviewers?.map((r: any) => r.email || r.reviewer_email) ||
-            [];
-            const currentAssigned = assignedEmails.filter(Boolean)[0] || "";
-            const isSameReviewer = selectedReviewer && selectedReviewer === currentAssigned;
-            return <Button
-              className="bg-[#3d5a47]"
-              onClick={() => {
-                setAssignNote("");
-                setIsAssignDialogOpen(true);
-              }}
-              disabled={isAssigning || !selectedReviewer || !!isSameReviewer}
-              title={isSameReviewer ? "Select a different reviewer to reassign" : ""}>
-                Reassign
-            </Button>;
-          })()}
-
-          {/* Send Contract - post-submission without contract */}
-          {decisionReviewerPostSubmission && !latestContract && !contractLoading && (
-            <Button
-              className="bg-[#2f4b40] hover:bg-[#2f4b40] hover:opacity-90 text-white gap-2"
-              onClick={() => {
-                const ct = getDefaultContractType(proposal?.book_type);
-                setStandaloneSendContractType(ct);
-                setStandaloneSendContractFields(getDefaultContractFields(ct, proposedTitle || proposal?.name || '', proposedSubtitle || proposal?.sub_title || ''));
-                setStandaloneSendContractOpen(true);
-              }}>
-              <Send className="h-4 w-4" /> Send Contract
-            </Button>
-          )}
-
-          {/* Request Info - always available */}
-          <Button variant="outline" className="gap-1.5" onClick={() => navigate(`/proposals/${proposal.ticket_number || id}/request-info`)}>
-            <Info className="h-4 w-4" /> Request Info
-          </Button>
-
-          {/* Decline - always available */}
-          <Button variant="outline" onClick={() => setIsDeclineDialogOpen(true)} disabled={isBusy}>
-            Decline
-          </Button>
+          {statusIs(proposal.status, "new", "submitted", "review_returned", "awaiting_more_info") && <>
+              {statusIs(proposal.status, "new", "submitted") && <Button className="bg-[#3d5a47]" onClick={() => {
+          setAssignNote("");
+          setIsAssignDialogOpen(true);
+        }} disabled={isAssigning}>
+                Submit for review
+              </Button>}
+              <Button variant="outline" className="gap-1.5" onClick={() => navigate(`/proposals/${proposal.ticket_number || id}/request-info`)}>
+                <Info className="h-4 w-4" /> Request Info
+              </Button>
+              {!statusIs(proposal.status, "locked", "declined", "rejected") && (
+                <Button variant="outline" onClick={() => setIsDeclineDialogOpen(true)} disabled={isBusy}>
+                  Decline
+                </Button>
+              )}
+            </>}
 
           {/* Submit for Review confirmation dialog with optional note */}
           <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
@@ -578,41 +565,71 @@ const ProposalDetails: React.FC = () => {
                   Note for Reviewer <span className="text-muted-foreground font-normal">(optional)</span>
                 </Label>
                 <Textarea
-                  id="assign-note"
-                  placeholder="E.g., Please pay particular attention to the methodology section."
-                  value={assignNote}
-                  onChange={(e) => setAssignNote(e.target.value)}
-                  className="min-h-[80px] resize-none" />
+              id="assign-note"
+              placeholder="E.g., Please pay particular attention to the methodology section."
+              value={assignNote}
+              onChange={(e) => setAssignNote(e.target.value)}
+              className="min-h-[80px] resize-none" />
+            
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAssignDialogOpen(false)}>
                   Cancel
                 </Button>
                 <Button
-                  className="bg-[#3d5a47] hover:bg-[#3d5a47]/90"
-                  onClick={() => {
-                    if (!selectedReviewer) {
-                      toast({ title: "No reviewer selected", description: "Please select a reviewer first.", variant: "destructive" });
-                      setIsAssignDialogOpen(false);
-                      return;
-                    }
-                    assignReviewers(
-                      { reviewerEmail: selectedReviewer, note: assignNote.trim() || undefined },
-                      { onSuccess: () => setIsAssignDialogOpen(false) }
-                    );
-                  }}
-                  disabled={isAssigning}>
-                    {isAssigning && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                    Submit for review
+              className="bg-[#3d5a47] hover:bg-[#3d5a47]/90"
+              onClick={() => {
+                if (!selectedReviewer) {
+                  toast({ title: "No reviewer selected", description: "Please select a reviewer first.", variant: "destructive" });
+                  setIsAssignDialogOpen(false);
+                  return;
+                }
+                assignReviewers(
+                  { reviewerEmail: selectedReviewer, note: assignNote.trim() || undefined },
+                  { onSuccess: () => setIsAssignDialogOpen(false) }
+                );
+              }}
+              disabled={isAssigning}>
+              
+                  {isAssigning && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Submit for review
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          {statusIs(proposal.status, "in_review", "under_review") && (() => {
+        const assignedEmails = (proposal as any)?.assigned_reviewer_emails ||
+        proposal?.assigned_reviewers?.map((r: any) => r.email || r.reviewer_email) ||
+        [];
+        const currentAssigned = assignedEmails.filter(Boolean)[0] || "";
+        const isSameReviewer = selectedReviewer && selectedReviewer === currentAssigned;
+        return <>
+          <Button
+          className="bg-[#3d5a47]"
+          onClick={() => {
+            setAssignNote("");
+            setIsAssignDialogOpen(true);
+          }}
+          disabled={isAssigning || !selectedReviewer || !!isSameReviewer}
+          title={isSameReviewer ? "Select a different reviewer to reassign" : ""}>
+              Reassign
+            </Button>
+          <Button variant="outline" className="gap-1.5" onClick={() => navigate(`/proposals/${proposal.ticket_number || id}/request-info`)}>
+            <Info className="h-4 w-4" /> Request Info
+          </Button>
+          {!statusIs(proposal.status, "locked", "declined", "rejected") && (
+            <Button variant="outline" onClick={() => setIsDeclineDialogOpen(true)} disabled={isBusy}>
+              Decline
+            </Button>
+          )}
+        </>;
+      })()}
         </div>}
       {/* ============ TABS — ROLE-SPECIFIC ============ */}
       {isReviewer1 ? (/* ---------- DECISION REVIEWER TABS ---------- */
     <Tabs value={drActiveTab} onValueChange={(v) => {setDrActiveTab(v);setDrFeedbackAccordion(undefined);}}>
-          <TabsList className={`grid w-full`} style={{ gridTemplateColumns: `repeat(${5 + (isContractSigned ? 1 : 0)}, minmax(0, 1fr))` }}>
+          <TabsList className={`grid w-full`} style={{ gridTemplateColumns: `repeat(${4 + (isContractSigned ? 1 : 0) + (decisionReviewerPostSubmission ? 1 : 0)}, minmax(0, 1fr))` }}>
             <TabsTrigger value="book" className="relative gap-1.5 text-xs sm:text-sm">
               <BookOpen className="h-4 w-4" />
               <span className="hidden sm:inline">Book info</span>
@@ -630,13 +647,15 @@ const ProposalDetails: React.FC = () => {
               <Sparkles className="h-4 w-4" />
               <span className="hidden sm:inline">AI Assistance</span>
             </TabsTrigger>
-            <TabsTrigger value="feedback" className="relative gap-1.5 text-xs sm:text-sm">
+            {decisionReviewerPostSubmission &&
+        <TabsTrigger value="feedback" className="relative gap-1.5 text-xs sm:text-sm">
                 <FileCheck className="h-4 w-4" />
                 <span className="hidden sm:inline">Feedback & Contract</span>
                 {(infoRequests.some((r) => r.status === 'responded') && !pendingInfoRequest && !latestContract || contractQueries.some((q) => q.type === 'query' && q.raised_by_role === 'author' && !contractQueries.some((r) => r.type === 'response' && r.parent_query_id === q.id))) &&
                   <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#D97706]" />
                 }
               </TabsTrigger>
+        }
             {isContractSigned &&
         <TabsTrigger value="metadata" className="relative gap-1.5 text-xs sm:text-sm">
                 <ClipboardList className="h-4 w-4" />
@@ -941,48 +960,6 @@ const ProposalDetails: React.FC = () => {
                 />
               </div>
             )}
-
-            {/* Prominent action banner when author responded but no contract sent */}
-            {isReviewer1 && !latestContract && !contractLoading && infoRequests.some((r) => r.status === 'responded') && (
-              <Card className="border-2 border-primary/30 bg-primary/5">
-                <CardContent className="pt-5 pb-5">
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-full bg-primary/10 p-2 shrink-0 mt-0.5">
-                      <Send className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1 space-y-3">
-                      <div>
-                        <p className="text-base font-semibold text-foreground">Author Has Responded — Next Steps</p>
-                        <p className="text-sm text-muted-foreground mt-0.5">
-                          The author has provided the requested information. You can now send a publishing contract or request additional information.
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Button
-                          className="bg-[#2f4b40] hover:bg-[#2f4b40] hover:opacity-90 text-white gap-2"
-                          onClick={() => {
-                            const ct = getDefaultContractType(proposal?.book_type);
-                            setStandaloneSendContractType(ct);
-                            setStandaloneSendContractFields(getDefaultContractFields(ct, proposedTitle || proposal?.name || '', proposedSubtitle || proposal?.sub_title || ''));
-                            setStandaloneSendContractOpen(true);
-                          }}
-                        >
-                          <Send className="h-4 w-4" /> Send Contract
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="gap-2"
-                          onClick={() => navigate(`/proposals/${ticketNum}/request-info`)}
-                        >
-                          <Info className="h-4 w-4" /> Request More Info
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             {(() => {
           const allReviews = reviewData?.reviews || (reviewData?.review ? [reviewData.review] : []);
           const peerReview = allReviews.find((r: any) => isPeerReviewerRole(r.reviewer_role));
