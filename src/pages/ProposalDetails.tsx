@@ -341,11 +341,12 @@ const ProposalDetails: React.FC = () => {
   const hasContractInSystem = !!latestContract;
   const decisionReviewerPostSubmission = isReviewer1 && (
     decisionReviewerSubmitted ||
-    statusIs(proposal?.status || "", "contract_issued", "approved", "locked", "awaiting_author_approval", "author_approved", "declined", "rejected", "queries_raised") ||
+    statusIs(proposal?.status || "", "contract_issued", "approved", "locked", "awaiting_author_approval", "author_approved", "declined", "rejected", "queries_raised", "awaiting_more_info") ||
     hasDecisionReviewInApi ||
     hasContractInSystem
   );
-  const drShouldShowFeedback = decisionReviewerPostSubmission;
+  // Feedback tab is always visible for DRs so all decision reviewers see the same UX
+  const drShouldShowFeedback = isReviewer1;
 
   // Default to metadata tab when metadata is available (contract signed)
   const isContractSignedEarly = latestContract?.docusign_status === 'completed' || !!latestContract?.docusign_completed_at;
@@ -414,7 +415,7 @@ const ProposalDetails: React.FC = () => {
   const submittedReview = hasSubmittedReview ? reviewFormData : null;
 
   const decisionReviewerAlreadySubmitted = isReviewer1 && (
-    statusIs(proposal.status, "contract_issued", "approved", "locked", "awaiting_author_approval", "author_approved", "declined", "rejected", "queries_raised") || 
+    statusIs(proposal.status, "contract_issued", "approved", "locked", "awaiting_author_approval", "author_approved", "declined", "rejected", "queries_raised", "awaiting_more_info") || 
     hasDecisionReviewInApi ||
     hasContractInSystem
   );
@@ -629,7 +630,7 @@ const ProposalDetails: React.FC = () => {
       {/* ============ TABS — ROLE-SPECIFIC ============ */}
       {isReviewer1 ? (/* ---------- DECISION REVIEWER TABS ---------- */
     <Tabs value={drActiveTab} onValueChange={(v) => {setDrActiveTab(v);setDrFeedbackAccordion(undefined);}}>
-          <TabsList className={`grid w-full`} style={{ gridTemplateColumns: `repeat(${4 + (isContractSigned ? 1 : 0) + (decisionReviewerPostSubmission ? 1 : 0)}, minmax(0, 1fr))` }}>
+          <TabsList className={`grid w-full`} style={{ gridTemplateColumns: `repeat(${4 + (isContractSigned ? 1 : 0) + (drShouldShowFeedback ? 1 : 0)}, minmax(0, 1fr))` }}>
             <TabsTrigger value="book" className="relative gap-1.5 text-xs sm:text-sm">
               <BookOpen className="h-4 w-4" />
               <span className="hidden sm:inline">Book info</span>
@@ -647,7 +648,7 @@ const ProposalDetails: React.FC = () => {
               <Sparkles className="h-4 w-4" />
               <span className="hidden sm:inline">AI Assistance</span>
             </TabsTrigger>
-            {decisionReviewerPostSubmission &&
+            {drShouldShowFeedback &&
         <TabsTrigger value="feedback" className="relative gap-1.5 text-xs sm:text-sm">
                 <FileCheck className="h-4 w-4" />
                 <span className="hidden sm:inline">Feedback & Contract</span>
