@@ -350,8 +350,8 @@ const ProposalDetails: React.FC = () => {
     hasContractInSystem ||
     hasPostReviewInfoHistory
   );
-  // Feedback tab is always visible for DRs so all decision reviewers see the same UX
-  const drShouldShowFeedback = isReviewer1;
+  // Feedback tab visible only after DR has submitted review or post-review context exists
+  const drShouldShowFeedback = decisionReviewerPostSubmission;
 
   // Default to metadata tab when metadata is available (contract signed)
   const isContractSignedEarly = latestContract?.docusign_status === 'completed' || !!latestContract?.docusign_completed_at;
