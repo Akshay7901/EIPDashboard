@@ -948,7 +948,7 @@ const ProposalDetails: React.FC = () => {
           {/* ---- FEEDBACK & CONTRACT (Decision Reviewer) ---- */}
           <TabsContent value="feedback" className="mt-4 space-y-4">
             {/* Prominent action banner when author responded and no contract sent */}
-            {isReviewer1 && !latestContract && !pendingInfoRequest && infoRequests.some((r) => r.status === 'responded') && (
+            {isReviewer1 && !latestContract && !pendingInfoRequest && (hasDecisionReviewInApi || hasContractInSystem) && infoRequests.some((r) => r.status === 'responded') && (
               <Card className="border-2 border-[#c4940a]/50 bg-[#c4940a]/5">
                 <CardContent className="pt-5 pb-5">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
