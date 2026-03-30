@@ -515,8 +515,8 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
       toast({
         title: "Publication data finalised",
         description: hasCoverImage
-          ? "Your metadata and cover image have been submitted and locked."
-          : "Your metadata has been submitted and locked. No cover image was provided — the publisher will use a default cover.",
+          ? "Your publication data and cover image have been submitted and locked."
+          : "Your publication data has been submitted and locked. No cover image was provided — the publisher will use a default cover.",
       });
     } catch (err: any) {
       toast({
