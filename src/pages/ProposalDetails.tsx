@@ -1136,7 +1136,7 @@ const ProposalDetails: React.FC = () => {
                   !latestContract ?
                   <div className="space-y-4">
                     <p className="text-sm text-muted-foreground">No contract has been sent for this proposal.</p>
-                    {(hasDecisionReviewInApi || hasContractInSystem) && infoRequests.some((r) => r.status === 'responded') && (
+                    {(hasDecisionReviewInApi || hasContractInSystem) && !pendingInfoRequest && infoRequests.some((r) => r.status === 'responded') && (
                       <div className="flex items-center gap-3">
                         <Button
                           className="bg-[#2f4b40] hover:bg-[#2f4b40] hover:opacity-90 text-white gap-2"
