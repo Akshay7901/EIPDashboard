@@ -877,7 +877,7 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
               }}
               disabled={hasPendingQuery || finalising}
             >
-              Finalise &amp; Lock Data
+              Finalise &amp; Submit Data
             </Button>
             {hasPendingQuery && (
               <span className="text-xs text-amber-600">Cannot finalise while a query is pending</span>
