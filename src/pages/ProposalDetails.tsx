@@ -340,12 +340,15 @@ const ProposalDetails: React.FC = () => {
   const hasDecisionReviewInApi = allReviews.some((r: any) => isDecisionReviewerRole(r.reviewer_role) && r.is_submitted);
   const hasContractInSystem = !!latestContract;
   const hasInfoRequestHistory = infoRequests && infoRequests.length > 0;
+  // Info requests only signal post-submission when a DR review or contract already exists
+  // (i.e., info was requested after the review, not from "new" state before any review)
+  const hasPostReviewInfoHistory = hasInfoRequestHistory && (hasDecisionReviewInApi || hasContractInSystem);
   const decisionReviewerPostSubmission = isReviewer1 && (
     decisionReviewerSubmitted ||
-    statusIs(proposal?.status || "", "contract_issued", "approved", "locked", "awaiting_author_approval", "author_approved", "declined", "rejected", "queries_raised", "awaiting_more_info") ||
+    statusIs(proposal?.status || "", "contract_issued", "approved", "locked", "awaiting_author_approval", "author_approved", "declined", "rejected", "queries_raised") ||
     hasDecisionReviewInApi ||
     hasContractInSystem ||
-    hasInfoRequestHistory
+    hasPostReviewInfoHistory
   );
   // Feedback tab is always visible for DRs so all decision reviewers see the same UX
   const drShouldShowFeedback = isReviewer1;
