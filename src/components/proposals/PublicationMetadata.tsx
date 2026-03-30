@@ -397,9 +397,9 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
       await metadataApi.update(ticketNumber, { ...buildPayload(), notes: "Submitted to author for finalization" });
       await metadataApi.send(ticketNumber);
       queryClient.invalidateQueries({ queryKey: ["metadata", ticketNumber] });
-      toast({ title: "Sent to Author", description: "Metadata has been sent to the author for approval." });
+      toast({ title: "Sent to Author", description: "Publication data has been sent to the author for approval." });
     } catch (err: any) {
-      toast({ title: "Submit failed", description: err?.message || "Could not send metadata to author.", variant: "destructive" });
+      toast({ title: "Submit failed", description: err?.message || "Could not send publication data to author.", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -449,19 +449,19 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
       {isApproved && (
         <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 text-sm text-emerald-800 flex items-center gap-2">
           <Check className="h-4 w-4" />
-          Metadata has been approved. No further changes can be made.
+          Publication data has been approved. No further changes can be made.
         </div>
       )}
 
       {isFormDisabled && !isApproved && (
         <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 text-sm text-emerald-800">
-          Metadata has been sent to the author for approval. Editing is disabled until the author responds or you need to make changes.
+          Publication data has been sent to the author for approval. Editing is disabled until the author responds or you need to make changes.
         </div>
       )}
 
       {hasPendingQueries && isSentToAuthor && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
-          The author has raised queries about the metadata. Review the changes below, update fields as needed, respond to the query, then re-send to the author.
+          The author has raised queries about the publication data. Review the changes below, update fields as needed, respond to the query, then re-send to the author.
         </div>
       )}
 
