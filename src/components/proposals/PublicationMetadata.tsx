@@ -93,6 +93,7 @@ const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
 
 interface AdditionalPerson {
   id: string;
+  type: "author" | "editor";
   salutation: string;
   firstName: string;
   lastName: string;
@@ -297,6 +298,7 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
         setAdditionalPeople(
           apiMeta.authors.slice(1).map((a) => ({
             id: crypto.randomUUID(),
+            type: "author" as const,
             salutation: a.title || "",
             firstName: a.first_name || "",
             lastName: a.last_name || "",
@@ -323,10 +325,10 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
     }
   }, [apiMeta, isLoading]);
 
-  const addPerson = () => {
+  const addPerson = (personType: "author" | "editor") => {
     setAdditionalPeople((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), salutation: "", firstName: "", lastName: "", email: "" },
+      { id: crypto.randomUUID(), type: personType, salutation: "", firstName: "", lastName: "", email: "" },
     ]);
   };
 
@@ -545,7 +547,7 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
           <React.Fragment key={person.id}>
             <div className="bg-muted/50 py-2 px-4 flex items-center justify-between border-b border-border">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Additional Author {idx + 1}
+                Additional {person.type === "editor" ? "Editor" : "Author"} {idx + 1}
               </p>
               {!isFormDisabled && (
                 <Button
@@ -566,10 +568,14 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
         ))}
 
         {!isFormDisabled && (
-          <div className="px-4 py-3 border-b border-border">
-            <Button variant="outline" size="sm" onClick={addPerson} className="gap-1.5">
+          <div className="px-4 py-3 border-b border-border flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => addPerson("author")} className="gap-1.5">
               <Plus className="h-3.5 w-3.5" />
-              {addButtonLabel}
+              Add Author
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => addPerson("editor")} className="gap-1.5">
+              <Plus className="h-3.5 w-3.5" />
+              Add Editor
             </Button>
           </div>
         )}
