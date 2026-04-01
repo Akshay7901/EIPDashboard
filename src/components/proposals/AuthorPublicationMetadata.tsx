@@ -47,7 +47,7 @@ const ReadOnlyRow: React.FC<{ label: string; sublabel?: string; value?: string |
         <span className="block text-xs font-normal text-muted-foreground/60">{sublabel}</span>
       )}
     </div>
-    <div className="py-3 px-4 text-sm text-foreground bg-muted/20 whitespace-pre-line">
+    <div className="py-3 px-4 text-sm text-foreground bg-muted/20 whitespace-pre-line break-words">
       {value || "—"}
     </div>
   </div>

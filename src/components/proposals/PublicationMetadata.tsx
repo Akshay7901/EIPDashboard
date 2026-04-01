@@ -578,7 +578,7 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
         <SectionHeader title="Book Information" />
 
         <EditableRow label="Book description" sublabel="(max 2000 characters)" value={bookDesc} onChange={setBookDesc} type="textarea" disabled={isFormDisabled} authorChange={authorChanges["book_description"] || null} />
-        <EditableRow label="Keywords/Tags" value={keywords} onChange={setKeywords} disabled={isFormDisabled} authorChange={authorChanges["keywords"] || null} />
+        <EditableRow label="Keywords/Tags" value={keywords} onChange={setKeywords} type="textarea" disabled={isFormDisabled} authorChange={authorChanges["keywords"] || null} />
 
         {/* Cover Image Section */}
         <SectionHeader title="Cover Image" />
