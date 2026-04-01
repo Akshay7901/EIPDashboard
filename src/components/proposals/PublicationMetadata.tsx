@@ -295,16 +295,16 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
 
       // Load additional authors (skip first which is primary)
       if (apiMeta.authors && apiMeta.authors.length > 1) {
-        setAdditionalPeople(
-          apiMeta.authors.slice(1).map((a) => ({
-            id: crypto.randomUUID(),
-            type: "author" as const,
+        setAdditionalPeople((prev) => {
+          return apiMeta.authors!.slice(1).map((a, idx) => ({
+            id: prev[idx]?.id || crypto.randomUUID(),
+            type: prev[idx]?.type || (((apiMeta.category || proposal.book_type || "").toLowerCase().includes("editor")) ? "editor" as const : "author" as const),
             salutation: a.title || "",
             firstName: a.first_name || "",
             lastName: a.last_name || "",
             email: a.email || "",
-          }))
-        );
+          }));
+        });
       }
     } else if (!isLoading) {
       // No API data yet, use proposal fallbacks
