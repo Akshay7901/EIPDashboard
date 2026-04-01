@@ -57,10 +57,20 @@ const EditableRow: React.FC<EditableRowProps> = ({
       {type === "textarea" ? (
         <Textarea
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            onChange(e.target.value);
+            e.target.style.height = "auto";
+            e.target.style.height = e.target.scrollHeight + "px";
+          }}
+          ref={(el) => {
+            if (el) {
+              el.style.height = "auto";
+              el.style.height = el.scrollHeight + "px";
+            }
+          }}
           disabled={disabled}
-          className={disabled ? "bg-muted/40 text-muted-foreground cursor-not-allowed resize-none" : "resize-none"}
-          rows={3}
+          className={`resize-none overflow-hidden ${disabled ? "bg-muted/40 text-muted-foreground cursor-not-allowed" : ""}`}
+          rows={1}
         />
       ) : (
         <Input
