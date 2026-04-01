@@ -93,6 +93,7 @@ const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
 
 interface AdditionalPerson {
   id: string;
+  type: "author" | "editor";
   salutation: string;
   firstName: string;
   lastName: string;
