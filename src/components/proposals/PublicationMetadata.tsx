@@ -325,10 +325,10 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
     }
   }, [apiMeta, isLoading]);
 
-  const addPerson = () => {
+  const addPerson = (personType: "author" | "editor") => {
     setAdditionalPeople((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), salutation: "", firstName: "", lastName: "", email: "" },
+      { id: crypto.randomUUID(), type: personType, salutation: "", firstName: "", lastName: "", email: "" },
     ]);
   };
 
