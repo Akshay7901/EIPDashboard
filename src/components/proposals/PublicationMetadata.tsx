@@ -547,7 +547,7 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
           <React.Fragment key={person.id}>
             <div className="bg-muted/50 py-2 px-4 flex items-center justify-between border-b border-border">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Additional Author {idx + 1}
+                Additional {person.type === "editor" ? "Editor" : "Author"} {idx + 1}
               </p>
               {!isFormDisabled && (
                 <Button
