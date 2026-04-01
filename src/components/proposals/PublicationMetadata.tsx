@@ -298,6 +298,7 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
         setAdditionalPeople(
           apiMeta.authors.slice(1).map((a) => ({
             id: crypto.randomUUID(),
+            type: "author" as const,
             salutation: a.title || "",
             firstName: a.first_name || "",
             lastName: a.last_name || "",
