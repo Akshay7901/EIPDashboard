@@ -568,10 +568,14 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
         ))}
 
         {!isFormDisabled && (
-          <div className="px-4 py-3 border-b border-border">
-            <Button variant="outline" size="sm" onClick={addPerson} className="gap-1.5">
+          <div className="px-4 py-3 border-b border-border flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => addPerson("author")} className="gap-1.5">
               <Plus className="h-3.5 w-3.5" />
-              {addButtonLabel}
+              Add Author
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => addPerson("editor")} className="gap-1.5">
+              <Plus className="h-3.5 w-3.5" />
+              Add Editor
             </Button>
           </div>
         )}
