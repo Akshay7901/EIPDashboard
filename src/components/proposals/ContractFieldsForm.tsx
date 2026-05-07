@@ -21,7 +21,6 @@ export interface ContractFieldValues {
 export function areContractFieldsValid(values: ContractFieldValues): boolean {
   return !!(
     values.title.trim() &&
-    values.subtitle.trim() &&
     values.language.trim() &&
     values.authorCopies.trim() &&
     values.ifTwoAuthorCopies.trim() &&
@@ -100,7 +99,7 @@ const ContractFieldsForm: React.FC<ContractFieldsFormProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={`${idPrefix}-subtitle`}>Subtitle <span className="text-destructive">*</span></Label>
+        <Label htmlFor={`${idPrefix}-subtitle`}>Subtitle</Label>
         <Input
           id={`${idPrefix}-subtitle`}
           value={values.subtitle}
