@@ -125,7 +125,9 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
   const apiMeta = metadataResponse?.metadata;
   const metadataStatus = metadataResponse?.metadata_status;
   const isSentToAuthor = metadataStatus === "sent_to_author";
-  const isApproved = metadataStatus === "approved" || proposal.status === "author_approved";
+  const isApproved =
+    metadataStatus === "approved" ||
+    statusIs(proposal.status || "", "author_approved", "approved", "locked");
 
   // Check for pending (unanswered) queries from author
   const pendingQueries = useMemo(() =>
