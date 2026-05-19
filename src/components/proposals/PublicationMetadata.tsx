@@ -393,6 +393,8 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
           : "Draft saved",
       });
       if (isApproved) {
+        // Re-send so backend exposes metadata to author, then re-approve to preserve approved status
+        try { await metadataApi.send(ticketNumber); } catch (e) { /* ignore if already sent */ }
         await metadataApi.approve(ticketNumber, {
           notes: "Decision reviewer saved final edits after author approval.",
         });
