@@ -155,7 +155,11 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
   });
 
   const metadataStatus = metadataResponse?.metadata_status;
-  const isApproved = metadataStatus === "approved" || metadataStatus === "author_approved";
+  const isApproved =
+    metadataStatus === "approved" ||
+    metadataStatus === "author_approved" ||
+    statusIs(proposal.status || "", "author_approved", "approved") ||
+    statusIs(proposal.internal_status || "", "author_approved", "approved");
 
   // Check if author has a pending (unanswered) query
   const hasPendingQuery = metadataQueries.some(
