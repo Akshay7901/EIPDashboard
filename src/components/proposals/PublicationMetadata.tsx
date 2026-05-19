@@ -134,8 +134,9 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
     ), [metadataQueries]);
   const hasPendingQueries = pendingQueries.length > 0;
 
-  // Form is editable when not sent OR when there are pending queries to address; always locked when approved
-  const isFormDisabled = isApproved || (isSentToAuthor && !hasPendingQueries);
+  // Form is editable when not sent OR when there are pending queries to address.
+  // After author approval the Decision Reviewer can still make final edits before locking.
+  const isFormDisabled = isSentToAuthor && !hasPendingQueries;
   // Fallback values from proposal
   const country = extractCountry(proposal.address) || proposal.country || "";
   const fullName = proposal.corresponding_author_name || proposal.author_name || "";
@@ -461,7 +462,7 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
       {isApproved && (
         <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 text-sm text-emerald-800 flex items-center gap-2">
           <Check className="h-4 w-4" />
-          Publication data has been approved. No further changes can be made.
+          Author has approved the publication data. You can make final edits and save before locking.
         </div>
       )}
 
@@ -617,7 +618,7 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
 
 
       {/* Action buttons - show when form is editable */}
-      {!isFormDisabled && !isApproved && (
+      {!isFormDisabled && (
         <div className="flex items-center justify-end gap-3 pt-2">
           <Button
             variant="outline"
@@ -626,16 +627,18 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
             onClick={handleSaveDraft}
           >
             {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-            Save Draft
+            {isApproved ? "Save Changes" : "Save Draft"}
           </Button>
-          <Button
-            className="bg-[#2f4b40] hover:opacity-90 text-white px-6"
-            disabled={submitting}
-            onClick={handleSubmitToAuthorClick}
-          >
-            {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-            Submit to Author for Finalization
-          </Button>
+          {!isApproved && (
+            <Button
+              className="bg-[#2f4b40] hover:opacity-90 text-white px-6"
+              disabled={submitting}
+              onClick={handleSubmitToAuthorClick}
+            >
+              {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Submit to Author for Finalization
+            </Button>
+          )}
         </div>
       )}
 
