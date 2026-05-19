@@ -161,6 +161,11 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
     statusIs(proposal.status || "", "author_approved", "approved") ||
     statusIs(proposal.internal_status || "", "author_approved", "approved");
 
+  const isLocked =
+    metadataStatus === "locked" ||
+    statusIs(proposal.status || "", "locked") ||
+    statusIs(proposal.internal_status || "", "locked");
+
   // Check if author has a pending (unanswered) query
   const hasPendingQuery = metadataQueries.some(
     (q) => q.type === 'query' && !metadataQueries.some((r) => r.type === 'response' && r.parent_query_id === q.id)
@@ -842,7 +847,7 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
       )}
 
       {/* Change Requests Section */}
-      {!isApproved && !readOnly && !statusIs(proposal.status || '', 'declined', 'rejected') && !statusIs(proposal.internal_status || '', 'declined', 'rejected') && (
+      {!isApproved && !isLocked && !readOnly && !statusIs(proposal.status || '', 'declined', 'rejected') && !statusIs(proposal.internal_status || '', 'declined', 'rejected') && (
         <>
           {requestingChanges ? (
             <div className="space-y-3 border border-amber-200 bg-amber-50/50 rounded-lg p-4">
