@@ -11,6 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { metadataApi, metadataQueriesApi, type ProposalMetadata, type MetadataAuthor, type MetadataQuery } from "@/lib/proposalsApi";
 import MetadataQueryDiffPanel from "@/components/proposals/MetadataQueryDiffPanel";
 import type { Proposal } from "@/types";
+import { statusIs } from "@/lib/statusUtils";
 
 interface PublicationMetadataProps {
   proposal: Proposal;
