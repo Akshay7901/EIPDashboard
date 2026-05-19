@@ -393,8 +393,13 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
           : "Draft saved",
       });
       if (isApproved) {
-        // Keep author-approved metadata visible to the author after DR final edits.
-        // Do not call send(), because the author has already finalised this data.
+        // After PUT, the backend may reset metadata_status to draft, hiding it from
+        // the author. Re-expose it by calling send() then re-applying approve() so
+        // the author sees the same author-approved view without being asked to
+        // re-approve.
+        try {
+          await metadataApi.send(ticketNumber);
+        } catch (e) { /* already sent — ignore */ }
         try {
           await metadataApi.approve(ticketNumber, {
             notes: "Decision reviewer saved final edits after author approval.",
