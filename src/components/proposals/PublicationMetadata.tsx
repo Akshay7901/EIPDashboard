@@ -386,8 +386,20 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
   const handleSaveDraft = async () => {
     setSaving(true);
     try {
-      await metadataApi.update(ticketNumber, { ...buildPayload(), notes: "Draft saved" });
+      await metadataApi.update(ticketNumber, {
+        ...buildPayload(),
+        notes: isApproved
+          ? "Decision reviewer updated author-approved publication data"
+          : "Draft saved",
+      });
+      if (isApproved) {
+        await metadataApi.approve(ticketNumber, {
+          notes: "Decision reviewer saved final edits after author approval.",
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ["metadata", ticketNumber] });
+      queryClient.invalidateQueries({ queryKey: ["proposal", ticketNumber] });
+      queryClient.invalidateQueries({ queryKey: ["proposals"] });
       toast({ title: "Publication Data saved", description: "Your changes have been saved." });
     } catch (err: any) {
       toast({ title: "Save failed", description: err?.message || "Could not save metadata.", variant: "destructive" });
