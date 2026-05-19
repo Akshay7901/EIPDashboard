@@ -871,6 +871,7 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
 
           {/* Bottom actions */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
+            {!isApproved && (<>
             {!requestingChanges && (
               <Button variant="outline" onClick={() => setRequestingChanges(true)} disabled={hasPendingQuery}>
                 Request changes
@@ -891,6 +892,10 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
             </Button>
             {hasPendingQuery && (
               <span className="text-xs text-amber-600">Cannot finalise while a query is pending</span>
+            )}
+            </>)}
+            {isApproved && (
+              <span className="text-xs text-emerald-700">You have approved the publication data.</span>
             )}
           </div>
 
