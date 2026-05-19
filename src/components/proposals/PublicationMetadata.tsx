@@ -140,7 +140,7 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
 
   // Form is editable when not sent OR when there are pending queries to address.
   // After author approval the Decision Reviewer can still make final edits before locking.
-  const isFormDisabled = isLocked || (isSentToAuthor && !hasPendingQueries);
+  const isFormDisabled = isLocked || (!isApproved && isSentToAuthor && !hasPendingQueries);
   // Fallback values from proposal
   const country = extractCountry(proposal.address) || proposal.country || "";
   const fullName = proposal.corresponding_author_name || proposal.author_name || "";
@@ -392,14 +392,6 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
           ? "Decision reviewer updated author-approved publication data"
           : "Draft saved",
       });
-      if (isApproved) {
-        // Preserve approved status without re-sending to author for finalization
-        try {
-          await metadataApi.approve(ticketNumber, {
-            notes: "Decision reviewer saved final edits after author approval.",
-          });
-        } catch (e) { /* ignore if backend rejects re-approval */ }
-      }
       queryClient.invalidateQueries({ queryKey: ["metadata", ticketNumber] });
       queryClient.invalidateQueries({ queryKey: ["proposal", ticketNumber] });
       queryClient.invalidateQueries({ queryKey: ["proposals"] });
@@ -647,7 +639,7 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
             onClick={handleSaveDraft}
           >
             {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-            {isApproved ? "Save Changes" : "Save Draft"}
+            Save Draft
           </Button>
           {!isApproved && (
             <Button
