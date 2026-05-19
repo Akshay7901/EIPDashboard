@@ -477,12 +477,6 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
         </div>
       )}
 
-      {isFormDisabled && !isApproved && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 text-sm text-emerald-800">
-          Publication data has been sent to the author for approval. Editing is disabled until the author responds or you need to make changes.
-        </div>
-      )}
-
       {hasPendingQueries && isSentToAuthor && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
           The author has raised queries about the publication data. Review the changes below, update fields as needed, respond to the query, then re-send to the author.
