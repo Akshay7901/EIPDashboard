@@ -393,11 +393,12 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
           : "Draft saved",
       });
       if (isApproved) {
-        // Re-send so backend exposes metadata to author, then re-approve to preserve approved status
-        try { await metadataApi.send(ticketNumber); } catch (e) { /* ignore if already sent */ }
-        await metadataApi.approve(ticketNumber, {
-          notes: "Decision reviewer saved final edits after author approval.",
-        });
+        // Preserve approved status without re-sending to author for finalization
+        try {
+          await metadataApi.approve(ticketNumber, {
+            notes: "Decision reviewer saved final edits after author approval.",
+          });
+        } catch (e) { /* ignore if backend rejects re-approval */ }
       }
       queryClient.invalidateQueries({ queryKey: ["metadata", ticketNumber] });
       queryClient.invalidateQueries({ queryKey: ["proposal", ticketNumber] });
