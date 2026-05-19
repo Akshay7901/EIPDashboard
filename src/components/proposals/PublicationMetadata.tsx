@@ -126,9 +126,10 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
   const apiMeta = metadataResponse?.metadata;
   const metadataStatus = metadataResponse?.metadata_status;
   const isSentToAuthor = metadataStatus === "sent_to_author";
+  const isLocked = statusIs(proposal.status || "", "locked") || metadataStatus === "locked";
   const isApproved =
     metadataStatus === "approved" ||
-    statusIs(proposal.status || "", "author_approved", "approved", "locked");
+    statusIs(proposal.status || "", "author_approved", "approved");
 
   // Check for pending (unanswered) queries from author
   const pendingQueries = useMemo(() =>
@@ -139,7 +140,7 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
 
   // Form is editable when not sent OR when there are pending queries to address.
   // After author approval the Decision Reviewer can still make final edits before locking.
-  const isFormDisabled = isSentToAuthor && !hasPendingQueries;
+  const isFormDisabled = isLocked || (isSentToAuthor && !hasPendingQueries);
   // Fallback values from proposal
   const country = extractCountry(proposal.address) || proposal.country || "";
   const fullName = proposal.corresponding_author_name || proposal.author_name || "";
@@ -462,7 +463,14 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
    return (
     <div className="space-y-4">
 
-      {isApproved && (
+      {isLocked && (
+        <div className="bg-muted border border-border rounded-lg px-4 py-3 text-sm text-muted-foreground flex items-center gap-2">
+          <Check className="h-4 w-4" />
+          Publication data is locked. No further edits can be made.
+        </div>
+      )}
+
+      {isApproved && !isLocked && (
         <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 text-sm text-emerald-800 flex items-center gap-2">
           <Check className="h-4 w-4" />
           Author has approved the publication data. You can make final edits and save before locking.
