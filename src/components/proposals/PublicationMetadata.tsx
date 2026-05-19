@@ -392,6 +392,15 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
           ? "Decision reviewer updated author-approved publication data"
           : "Draft saved",
       });
+      if (isApproved) {
+        // Keep author-approved metadata visible to the author after DR final edits.
+        // Do not call send(), because the author has already finalised this data.
+        try {
+          await metadataApi.approve(ticketNumber, {
+            notes: "Decision reviewer saved final edits after author approval.",
+          });
+        } catch (e) { /* keep the saved draft even if the backend rejects re-approval */ }
+      }
       queryClient.invalidateQueries({ queryKey: ["metadata", ticketNumber] });
       queryClient.invalidateQueries({ queryKey: ["proposal", ticketNumber] });
       queryClient.invalidateQueries({ queryKey: ["proposals"] });
