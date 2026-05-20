@@ -7,13 +7,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Loader2, Users, ArrowUpDown } from "lucide-react";
+import { Search, Loader2, Users, ArrowUpDown, Trash2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import ProfileDropdown from "@/components/layout/ProfileDropdown";
 import TruncatedCell from "@/components/ui/truncated-cell";
 import { format } from "date-fns";
 import { useProposals } from "@/hooks/useProposals";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProposalActions } from "@/hooks/useProposalActions";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.jpg";
 import brandLogo from "@/assets/brand-logo.webp";
@@ -109,7 +120,9 @@ const StatusChip: React.FC<StatusChipProps> = ({ count, label, colorClass, isAct
 
 const Proposals: React.FC = () => {
   const navigate = useNavigate();
-  const { isAnyReviewer, isReviewer1, isReviewer2, isAuthor } = useAuth();
+  const { isAnyReviewer, isReviewer1, isReviewer2, isAuthor, isAdmin } = useAuth();
+  const [deleteTarget, setDeleteTarget] = useState<{ ticket: string; name: string } | null>(null);
+  const { deleteProposal, isDeleting } = useProposalActions(deleteTarget?.ticket);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCategory, setSearchCategory] = useState<string>("author");
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
@@ -430,6 +443,11 @@ const Proposals: React.FC = () => {
                       <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide text-right w-[10%]">
                         Status
                       </TableHead>
+                      {isAdmin && (
+                        <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide text-right w-[6%]">
+                          Actions
+                        </TableHead>
+                      )}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -475,6 +493,27 @@ const Proposals: React.FC = () => {
                         <TableCell className="text-right">
                           <ProposalStatusBadge status={proposal.status} showIcon={false} />
                         </TableCell>
+                        {isAdmin && (
+                          <TableCell
+                            className="text-right"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() =>
+                                setDeleteTarget({
+                                  ticket: proposal.ticket_number || proposal.id,
+                                  name: proposal.name,
+                                })
+                              }
+                              aria-label="Delete proposal"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>
@@ -490,6 +529,38 @@ const Proposals: React.FC = () => {
           )}
         </div>
       </div>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && !isDeleting && setDeleteTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this proposal?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete
+              {deleteTarget?.name ? ` "${deleteTarget.name}"` : " this proposal"}.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isDeleting}
+              onClick={(e) => {
+                e.preventDefault();
+                if (!deleteTarget) return;
+                deleteProposal(undefined as any, {
+                  onSuccess: () => setDeleteTarget(null),
+                });
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };

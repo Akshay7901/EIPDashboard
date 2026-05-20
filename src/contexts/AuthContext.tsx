@@ -14,6 +14,7 @@ interface AuthContextType extends AuthState {
   isReviewer2: boolean;
   isAnyReviewer: boolean;
   isAuthor: boolean;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,6 +40,13 @@ const mapApiRole = (apiRole?: string | null): 'reviewer_1' | 'reviewer_2' | 'aut
   }
 };
 
+// Detect whether the raw API role represents an admin user. Admins still act
+// as Decision Reviewers (role mapped to 'reviewer_1'), but get extra abilities.
+const isAdminApiRole = (apiRole?: string | null): boolean => {
+  const normalized = (apiRole || '').toString().trim().toLowerCase();
+  return normalized === 'admin';
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AuthState>({
     user: null,
@@ -46,6 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated: false,
     isLoading: true,
   });
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   // Initialize auth state from localStorage
   useEffect(() => {
@@ -63,6 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Keep localStorage in sync with normalized role values
         localStorage.setItem('user', JSON.stringify(normalizedUser));
 
+        setIsAdmin(isAdminApiRole(parsedUser?.raw_role ?? parsedUser?.role));
         setState({
           user: normalizedUser,
           profile: null,
@@ -83,16 +93,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Store token
     localStorage.setItem('auth_token', token);
 
+    const rawRole = data.user?.role || data.role || '';
     // Map user data
     const user: User = {
       id: data.user?.id || data.id || data.email,
       email: data.user?.email || data.email,
       name: data.user?.name || data.name || data.email.split('@')[0],
-      role: mapApiRole(data.user?.role || data.role || ''),
+      role: mapApiRole(rawRole),
     };
 
-    localStorage.setItem('user', JSON.stringify(user));
+    // Persist the raw role alongside the normalized user so we can recover
+    // admin status after a page reload without losing DR mapping.
+    localStorage.setItem('user', JSON.stringify({ ...user, raw_role: rawRole }));
 
+    setIsAdmin(isAdminApiRole(rawRole));
     setState({
       user,
       profile: null,
@@ -133,6 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user');
+    setIsAdmin(false);
     setState({
       user: null,
       profile: null,
@@ -167,6 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isReviewer2,
         isAnyReviewer,
         isAuthor,
+        isAdmin,
       }}
     >
       {children}
