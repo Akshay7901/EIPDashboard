@@ -7,13 +7,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Loader2, Users, ArrowUpDown } from "lucide-react";
+import { Search, Loader2, Users, ArrowUpDown, Trash2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import ProfileDropdown from "@/components/layout/ProfileDropdown";
 import TruncatedCell from "@/components/ui/truncated-cell";
 import { format } from "date-fns";
 import { useProposals } from "@/hooks/useProposals";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProposalActions } from "@/hooks/useProposalActions";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.jpg";
 import brandLogo from "@/assets/brand-logo.webp";
@@ -109,7 +120,9 @@ const StatusChip: React.FC<StatusChipProps> = ({ count, label, colorClass, isAct
 
 const Proposals: React.FC = () => {
   const navigate = useNavigate();
-  const { isAnyReviewer, isReviewer1, isReviewer2, isAuthor } = useAuth();
+  const { isAnyReviewer, isReviewer1, isReviewer2, isAuthor, isAdmin } = useAuth();
+  const [deleteTarget, setDeleteTarget] = useState<{ ticket: string; name: string } | null>(null);
+  const { deleteProposal, isDeleting } = useProposalActions(deleteTarget?.ticket);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCategory, setSearchCategory] = useState<string>("author");
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
