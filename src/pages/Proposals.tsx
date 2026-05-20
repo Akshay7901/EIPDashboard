@@ -443,6 +443,11 @@ const Proposals: React.FC = () => {
                       <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide text-right w-[10%]">
                         Status
                       </TableHead>
+                      {isAdmin && (
+                        <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide text-right w-[6%]">
+                          Actions
+                        </TableHead>
+                      )}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -488,6 +493,27 @@ const Proposals: React.FC = () => {
                         <TableCell className="text-right">
                           <ProposalStatusBadge status={proposal.status} showIcon={false} />
                         </TableCell>
+                        {isAdmin && (
+                          <TableCell
+                            className="text-right"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() =>
+                                setDeleteTarget({
+                                  ticket: proposal.ticket_number || proposal.id,
+                                  name: proposal.name,
+                                })
+                              }
+                              aria-label="Delete proposal"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>
@@ -503,6 +529,38 @@ const Proposals: React.FC = () => {
           )}
         </div>
       </div>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && !isDeleting && setDeleteTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this proposal?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete
+              {deleteTarget?.name ? ` "${deleteTarget.name}"` : " this proposal"}.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isDeleting}
+              onClick={(e) => {
+                e.preventDefault();
+                if (!deleteTarget) return;
+                deleteProposal(undefined as any, {
+                  onSuccess: () => setDeleteTarget(null),
+                });
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
