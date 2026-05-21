@@ -1220,22 +1220,37 @@ const ProposalDetails: React.FC = () => {
                             </div>
                     }
 
-                          {/* View document button */}
-                          <Button
-                      variant="outline"
-                      className="gap-2"
-                      onClick={async () => {
-                        setContractViewOpen(true);
-                        setContractPdfLoading(true);
-                        try {
-                          const url = await contractApi.getDocumentBlob(proposal.ticket_number || id || '');
-                          setContractPdfUrl(url);
-                        } catch {setContractPdfUrl(null);} finally
-                        {setContractPdfLoading(false);}
-                      }}>
-                      
-                            <Eye className="h-4 w-4" /> View Contract Document
-                          </Button>
+                          <div className="flex items-center gap-3 flex-wrap">
+                            {/* View document button */}
+                            <Button
+                        variant="outline"
+                        className="gap-2"
+                        onClick={async () => {
+                          setContractViewOpen(true);
+                          setContractPdfLoading(true);
+                          try {
+                            const url = await contractApi.getDocumentBlob(proposal.ticket_number || id || '');
+                            setContractPdfUrl(url);
+                          } catch {setContractPdfUrl(null);} finally
+                          {setContractPdfLoading(false);}
+                        }}>
+                        
+                              <Eye className="h-4 w-4" /> View Contract Document
+                            </Button>
+                            {(isReviewer1 || isAdmin) && latestContract.status === 'voided' && (
+                              <Button
+                                className="bg-[#2f4b40] hover:bg-[#2f4b40] hover:opacity-90 text-white gap-2"
+                                onClick={() => {
+                                  const ct = latestContract?.contract_type || getDefaultContractType(proposal?.book_type);
+                                  setStandaloneSendContractType(ct);
+                                  setStandaloneSendContractFields(getDefaultContractFields(ct, proposedTitle || latestContract?.title || proposal?.name || '', proposedSubtitle || latestContract?.subtitle || proposal?.sub_title || ''));
+                                  setStandaloneSendContractOpen(true);
+                                }}
+                              >
+                                <Send className="h-4 w-4" /> Send Contract
+                              </Button>
+                            )}
+                          </div>
                         </div>
                   }
                     </AccordionContent>
