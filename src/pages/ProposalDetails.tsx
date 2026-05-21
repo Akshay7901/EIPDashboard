@@ -521,6 +521,11 @@ const ProposalDetails: React.FC = () => {
           </div>
       }
       </div>
+      {(isReviewer1 || isAdmin) && proposal.internal_status === 'review_returned' && latestContract?.status === 'voided' && (
+        <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          The previously issued contract expired without being signed. Please re-issue a new contract.
+        </div>
+      )}
       {/* Reviewer + Actions row (for reviewer_1 only, hide once review is returned) */}
       {isReviewer1 && !isAdmin && !decisionReviewerPostSubmission && !hasSubmittedReview && !statusIs(proposal.status, "declined", "rejected") && (statusIs(proposal.status, "new", "submitted") || statusIs(proposal.status, "in_review", "under_review") || statusIs(proposal.status, "awaiting_more_info", "review_returned")) && <div className="flex items-center gap-3 flex-wrap">
           {reviewers.length > 0 && <>
