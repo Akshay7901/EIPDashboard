@@ -713,7 +713,7 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
                   <div>
                     <p className="font-medium text-foreground">Need help?</p>
                     <p>
-                      <a href="mailto:robert@ethicspress.com" className="text-primary underline-offset-2 hover:underline">
+                      <a href="mailto:robert.blair@ethicspress.com" className="text-primary underline-offset-2 hover:underline">
                         Contact Robert
                       </a>
                     </p>
