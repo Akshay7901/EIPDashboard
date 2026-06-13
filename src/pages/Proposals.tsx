@@ -57,7 +57,7 @@ const SentToAuthorDot: React.FC = () => (
     <TooltipTrigger asChild>
       <span
         aria-label="Publication data sent to author"
-        className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-sky-500 ring-2 ring-background"
+        className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-[#D97706] ring-2 ring-background"
       />
     </TooltipTrigger>
     <TooltipContent><p>Publication data sent to author</p></TooltipContent>
