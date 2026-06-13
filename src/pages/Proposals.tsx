@@ -30,8 +30,31 @@ import logo from "@/assets/logo.jpg";
 import brandLogo from "@/assets/brand-logo.webp";
 import { extractCountry } from "@/lib/extractCountry";
 import ProposalStatusBadge from "@/components/proposals/ProposalStatusBadge";
+import { useQuery } from "@tanstack/react-query";
+import { metadataApi } from "@/lib/proposalsApi";
 
 const ITEMS_PER_PAGE = 10;
+
+/* Lazy indicator for "Contract Received" rows — fetches metadata to check
+   whether publication data has been sent to the author. */
+const SentToAuthorIndicator: React.FC<{ ticketNumber: string }> = ({ ticketNumber }) => {
+  const { data } = useQuery({
+    queryKey: ['proposal-metadata-status', ticketNumber],
+    queryFn: () => metadataApi.get(ticketNumber),
+    staleTime: 30000,
+    refetchInterval: 30000,
+    retry: false,
+  });
+  const status = data?.metadata_status;
+  if (status !== 'sent_to_author' && status !== 'pending_author_approval' && status !== 'awaiting_author_approval') {
+    return null;
+  }
+  return (
+    <span className="text-[10px] font-medium text-sky-600 whitespace-nowrap">
+      • Sent to author
+    </span>
+  );
+};
 
 /* ============================================================
    DECISION REVIEWER (reviewer_1) — "Proposal Intake" config
@@ -495,11 +518,21 @@ const Proposals: React.FC = () => {
                             <ProposalStatusBadge status={proposal.status} showIcon={false} />
                             {(() => {
                               const normStatus = (proposal.status || '').trim().toLowerCase().replace(/\s+/g, '_');
-                              return normStatus === 'contract_received' && proposal.metadata_status === 'sent_to_author' ? (
-                                <span className="text-[10px] font-medium text-sky-600 whitespace-nowrap">
-                                  • Sent to author
-                                </span>
-                              ) : null;
+                              if (normStatus !== 'contract_received') return null;
+                              // If list already gave us metadata_status, use it
+                              if (proposal.metadata_status) {
+                                const ms = proposal.metadata_status;
+                                if (ms === 'sent_to_author' || ms === 'pending_author_approval' || ms === 'awaiting_author_approval') {
+                                  return (
+                                    <span className="text-[10px] font-medium text-sky-600 whitespace-nowrap">
+                                      • Sent to author
+                                    </span>
+                                  );
+                                }
+                                return null;
+                              }
+                              // Otherwise lazily fetch metadata for this row
+                              return <SentToAuthorIndicator ticketNumber={proposal.ticket_number || proposal.id} />;
                             })()}
                           </div>
                         </TableCell>
