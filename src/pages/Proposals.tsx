@@ -491,7 +491,17 @@ const Proposals: React.FC = () => {
                           </TableCell>
                         )}
                         <TableCell className="text-right">
-                          <ProposalStatusBadge status={proposal.status} showIcon={false} />
+                          <div className="flex flex-col items-end gap-1">
+                            <ProposalStatusBadge status={proposal.status} showIcon={false} />
+                            {(() => {
+                              const normStatus = (proposal.status || '').trim().toLowerCase().replace(/\s+/g, '_');
+                              return normStatus === 'contract_received' && proposal.metadata_status === 'sent_to_author' ? (
+                                <span className="text-[10px] font-medium text-sky-600 whitespace-nowrap">
+                                  • Sent to author
+                                </span>
+                              ) : null;
+                            })()}
+                          </div>
                         </TableCell>
                         {isAdmin && (
                           <TableCell
