@@ -233,7 +233,7 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
 
   const MIN_DIMENSION = 2360;
   const MAX_FILE_SIZE_MB = 10;
-  const MIN_DPI = 300;
+  const MIN_DPI = 200;
 
   const validateImageDimensions = (file: File): Promise<{ width: number; height: number }> => {
     return new Promise((resolve, reject) => {
@@ -347,8 +347,8 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
     let dpi: number | null = null;
 
     // File type check
-    if (!["image/jpeg", "image/tiff"].includes(file.type)) {
-      errors.push(`Invalid file type "${file.type.split("/")[1]?.toUpperCase() || "unknown"}". Only JPEG and TIFF files are accepted.`);
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
+      errors.push(`Invalid file type "${file.type.split("/")[1]?.toUpperCase() || "unknown"}". Only JPG and PNG files are accepted.`);
     }
 
     // File size check
@@ -357,19 +357,16 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
     }
 
     // Dimension & DPI check (only if file type is valid image)
-    if (["image/jpeg", "image/tiff"].includes(file.type)) {
+    if (["image/jpeg", "image/png"].includes(file.type)) {
       try {
         const dims = await validateImageDimensions(file);
         width = dims.width;
         height = dims.height;
-        if (width < MIN_DIMENSION || height < MIN_DIMENSION) {
-          errors.push(`Image dimensions ${width}×${height}px are below the minimum ${MIN_DIMENSION}×${MIN_DIMENSION}px (≈200mm × 200mm at 300 DPI).`);
-        }
       } catch {
         errors.push("Could not read image dimensions. The file may be corrupted.");
       }
 
-      // DPI check (JPEG only — TIFF DPI parsing is complex, let API handle it)
+      // DPI check (JPEG only — PNG DPI parsing left to API)
       if (file.type === "image/jpeg") {
         try {
           const buffer = await file.arrayBuffer();
@@ -377,7 +374,7 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
           if (dpi === null) {
             errors.push(`Could not read DPI metadata from the image. Please ensure the file has DPI information embedded (minimum ${MIN_DPI} DPI).`);
           } else if (dpi < MIN_DPI) {
-            errors.push(`Image DPI is ${dpi}, which is below the minimum ${MIN_DPI} DPI required for print quality.`);
+            errors.push(`Image resolution is ${dpi} DPI, which is below the minimum ${MIN_DPI} DPI required.`);
           }
         } catch {
           errors.push("Could not read DPI metadata from the image.");
@@ -674,12 +671,11 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
                   </p>
                   <p>Please ensure your image meets the following requirements before uploading:</p>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {[
-                    { label: "Format", value: "JPEG or TIFF" },
-                    { label: "Min. dimensions", value: `${MIN_DIMENSION}×${MIN_DIMENSION}px` },
-                    { label: "Min. DPI", value: `${MIN_DPI} DPI` },
-                    { label: "Max. file size", value: `${MAX_FILE_SIZE_MB}MB` },
+                    { label: "File type", value: "JPG or PNG" },
+                    { label: "Minimum resolution", value: `${MIN_DPI} × ${MIN_DPI} dpi` },
+                    { label: "Maximum file size", value: `${MAX_FILE_SIZE_MB} MB` },
                   ].map((req) => (
                     <div key={req.label} className="flex items-center gap-1.5 rounded-md bg-muted/30 px-3 py-2 border border-border">
                       <FileImage className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -770,7 +766,7 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
                         <input
                           id="cover-upload"
                           type="file"
-                          accept="image/jpeg,image/tiff,.tif,.tiff"
+                          accept="image/jpeg,image/png,.jpg,.jpeg,.png"
                           className="hidden"
                           onChange={handleCoverImageChange}
                         />
