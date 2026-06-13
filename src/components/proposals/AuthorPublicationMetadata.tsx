@@ -667,10 +667,13 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
           ) : (
             <>
               {/* Requirements list */}
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  Upload a cover image for your publication. If you do not provide one, the publisher will use a default cover.
-                </p>
+              <div className="space-y-3">
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p>
+                    You are welcome to submit a proposed cover image for consideration. If you do not provide one, we will use a plain default cover.
+                  </p>
+                  <p>Please ensure your image meets the following requirements before uploading:</p>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
                   {[
                     { label: "Format", value: "JPEG or TIFF" },
@@ -685,6 +688,41 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
                       </span>
                     </div>
                   ))}
+                </div>
+                <div className="space-y-2 text-sm text-muted-foreground pt-1">
+                  <div>
+                    <p className="font-medium text-foreground">How to upload</p>
+                    <p>
+                      Click the upload button below to select your image. Once submitted, your image will be reviewed and you will be notified of the outcome.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">If your image is rejected</p>
+                    <p>
+                      If your image does not meet the required specifications, the reason will be displayed in red below. In this case, you may use one of the tools below to resize or compress your image before resubmitting:
+                    </p>
+                    <ul className="list-disc list-inside mt-1 space-y-0.5">
+                      <li>
+                        <a href="https://imageresizer.com/" target="_blank" rel="noopener noreferrer" className="text-primary underline-offset-2 hover:underline">
+                          Resize your image
+                        </a>
+                      </li>
+                      <li>
+                        <a href="https://convert.town/image-dpi" target="_blank" rel="noopener noreferrer" className="text-primary underline-offset-2 hover:underline">
+                          Compress your image
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">Need help?</p>
+                    <p>
+                      <a href="mailto:robert@ethicspress.com" className="text-primary underline-offset-2 hover:underline">
+                        Contact Robert
+                      </a>
+                    </p>
+                  </div>
+                  <p className="italic">Once adjusted, simply upload your image again using the button below.</p>
                 </div>
               </div>
 
