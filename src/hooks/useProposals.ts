@@ -64,6 +64,7 @@ const mapApiProposal = (apiProposal: any): Proposal => {
     assigned_at: apiProposal.assigned_at || extractAssignedAt(apiProposal.assigned_reviewers || apiProposal.assignments),
     assigned_reviewers: normalizeAssignments(apiProposal.assigned_reviewers || apiProposal.assignments),
     action_required: apiProposal.action_required ?? false,
+    metadata_status: apiProposal.metadata_status ?? apiProposal.current_data?.metadata_status ?? null,
   };
 };
 
