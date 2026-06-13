@@ -191,6 +191,8 @@ export interface Proposal {
   internal_status?: string | null;
   // Action required flag from API
   action_required?: boolean;
+  // Publication metadata status from API (e.g. "draft", "sent_to_author", "approved")
+  metadata_status?: string | null;
   // Legacy compatibility
   client?: string;
   clientEmail?: string;
