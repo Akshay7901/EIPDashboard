@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Check, CheckCircle2, Plus, Trash2, Loader2, MessageSquare, ImageIcon } from "lucide-react";
+import { Check, CheckCircle2, Plus, Trash2, Loader2, MessageSquare, ImageIcon, Clock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { extractCountry } from "@/lib/extractCountry";
 import { Badge } from "@/components/ui/badge";
@@ -495,6 +495,13 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
         <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 text-sm text-emerald-800 flex items-center gap-2">
           <Check className="h-4 w-4" />
           Author has approved the publication data. You can make final edits and save before locking.
+        </div>
+      )}
+
+      {isSentToAuthor && !isApproved && !isLocked && !hasPendingQueries && (
+        <div className="bg-sky-50 border border-sky-200 rounded-lg px-4 py-3 text-sm text-sky-800 flex items-center gap-2">
+          <Clock className="h-4 w-4" />
+          Publication data has been sent to the author for finalization. Awaiting their approval.
         </div>
       )}
 
