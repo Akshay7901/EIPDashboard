@@ -233,7 +233,7 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
 
   const MIN_DIMENSION = 2360;
   const MAX_FILE_SIZE_MB = 10;
-  const MIN_DPI = 300;
+  const MIN_DPI = 200;
 
   const validateImageDimensions = (file: File): Promise<{ width: number; height: number }> => {
     return new Promise((resolve, reject) => {
