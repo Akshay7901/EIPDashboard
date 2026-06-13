@@ -347,8 +347,8 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
     let dpi: number | null = null;
 
     // File type check
-    if (!["image/jpeg", "image/tiff"].includes(file.type)) {
-      errors.push(`Invalid file type "${file.type.split("/")[1]?.toUpperCase() || "unknown"}". Only JPEG and TIFF files are accepted.`);
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
+      errors.push(`Invalid file type "${file.type.split("/")[1]?.toUpperCase() || "unknown"}". Only JPG and PNG files are accepted.`);
     }
 
     // File size check
@@ -357,19 +357,16 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
     }
 
     // Dimension & DPI check (only if file type is valid image)
-    if (["image/jpeg", "image/tiff"].includes(file.type)) {
+    if (["image/jpeg", "image/png"].includes(file.type)) {
       try {
         const dims = await validateImageDimensions(file);
         width = dims.width;
         height = dims.height;
-        if (width < MIN_DIMENSION || height < MIN_DIMENSION) {
-          errors.push(`Image dimensions ${width}×${height}px are below the minimum ${MIN_DIMENSION}×${MIN_DIMENSION}px (≈200mm × 200mm at 300 DPI).`);
-        }
       } catch {
         errors.push("Could not read image dimensions. The file may be corrupted.");
       }
 
-      // DPI check (JPEG only — TIFF DPI parsing is complex, let API handle it)
+      // DPI check (JPEG only — PNG DPI parsing left to API)
       if (file.type === "image/jpeg") {
         try {
           const buffer = await file.arrayBuffer();
@@ -377,7 +374,7 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
           if (dpi === null) {
             errors.push(`Could not read DPI metadata from the image. Please ensure the file has DPI information embedded (minimum ${MIN_DPI} DPI).`);
           } else if (dpi < MIN_DPI) {
-            errors.push(`Image DPI is ${dpi}, which is below the minimum ${MIN_DPI} DPI required for print quality.`);
+            errors.push(`Image resolution is ${dpi} DPI, which is below the minimum ${MIN_DPI} DPI required.`);
           }
         } catch {
           errors.push("Could not read DPI metadata from the image.");
