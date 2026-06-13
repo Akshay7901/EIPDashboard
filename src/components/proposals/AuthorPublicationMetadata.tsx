@@ -674,12 +674,11 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
                   </p>
                   <p>Please ensure your image meets the following requirements before uploading:</p>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {[
-                    { label: "Format", value: "JPEG or TIFF" },
-                    { label: "Min. dimensions", value: `${MIN_DIMENSION}×${MIN_DIMENSION}px` },
-                    { label: "Min. DPI", value: `${MIN_DPI} DPI` },
-                    { label: "Max. file size", value: `${MAX_FILE_SIZE_MB}MB` },
+                    { label: "File type", value: "JPG or PNG" },
+                    { label: "Minimum resolution", value: `${MIN_DPI} × ${MIN_DPI} dpi` },
+                    { label: "Maximum file size", value: `${MAX_FILE_SIZE_MB} MB` },
                   ].map((req) => (
                     <div key={req.label} className="flex items-center gap-1.5 rounded-md bg-muted/30 px-3 py-2 border border-border">
                       <FileImage className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -770,7 +769,7 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
                         <input
                           id="cover-upload"
                           type="file"
-                          accept="image/jpeg,image/tiff,.tif,.tiff"
+                          accept="image/jpeg,image/png,.jpg,.jpeg,.png"
                           className="hidden"
                           onChange={handleCoverImageChange}
                         />
