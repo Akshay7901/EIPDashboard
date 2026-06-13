@@ -49,12 +49,20 @@ const SentToAuthorIndicator: React.FC<{ ticketNumber: string }> = ({ ticketNumbe
   if (status !== 'sent_to_author' && status !== 'pending_author_approval' && status !== 'awaiting_author_approval') {
     return null;
   }
-  return (
-    <span className="text-[10px] font-medium text-sky-600 whitespace-nowrap">
-      • Sent to author
-    </span>
-  );
+  return <SentToAuthorDot />;
 };
+
+const SentToAuthorDot: React.FC = () => (
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <span
+        aria-label="Publication data sent to author"
+        className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-sky-500 ring-2 ring-background"
+      />
+    </TooltipTrigger>
+    <TooltipContent><p>Publication data sent to author</p></TooltipContent>
+  </Tooltip>
+);
 
 /* ============================================================
    DECISION REVIEWER (reviewer_1) — "Proposal Intake" config
@@ -514,27 +522,23 @@ const Proposals: React.FC = () => {
                           </TableCell>
                         )}
                         <TableCell className="text-right">
-                          <div className="flex flex-col items-end gap-1">
-                            <ProposalStatusBadge status={proposal.status} showIcon={false} />
-                            {(() => {
-                              const normStatus = (proposal.status || '').trim().toLowerCase().replace(/\s+/g, '_');
-                              if (normStatus !== 'contract_received') return null;
-                              // If list already gave us metadata_status, use it
-                              if (proposal.metadata_status) {
-                                const ms = proposal.metadata_status;
-                                if (ms === 'sent_to_author' || ms === 'pending_author_approval' || ms === 'awaiting_author_approval') {
-                                  return (
-                                    <span className="text-[10px] font-medium text-sky-600 whitespace-nowrap">
-                                      • Sent to author
-                                    </span>
-                                  );
+                          <TooltipProvider>
+                            <div className="relative inline-block">
+                              <ProposalStatusBadge status={proposal.status} showIcon={false} />
+                              {(() => {
+                                const normStatus = (proposal.status || '').trim().toLowerCase().replace(/\s+/g, '_');
+                                if (normStatus !== 'contract_received') return null;
+                                if (proposal.metadata_status) {
+                                  const ms = proposal.metadata_status;
+                                  if (ms === 'sent_to_author' || ms === 'pending_author_approval' || ms === 'awaiting_author_approval') {
+                                    return <SentToAuthorDot />;
+                                  }
+                                  return null;
                                 }
-                                return null;
-                              }
-                              // Otherwise lazily fetch metadata for this row
-                              return <SentToAuthorIndicator ticketNumber={proposal.ticket_number || proposal.id} />;
-                            })()}
-                          </div>
+                                return <SentToAuthorIndicator ticketNumber={proposal.ticket_number || proposal.id} />;
+                              })()}
+                            </div>
+                          </TooltipProvider>
                         </TableCell>
                         {isAdmin && (
                           <TableCell
