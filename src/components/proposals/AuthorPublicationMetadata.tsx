@@ -948,7 +948,7 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
                 <AlertDialogTitle>Finalise Publication data</AlertDialogTitle>
               </AlertDialogHeader>
               <div className="space-y-3 text-sm text-muted-foreground">
-                <p>Please note that information cannot be amended once finalised. Make sure to check over the information thoroughly before proceeding.</p>
+                <p>The details shown will be used exactly as they appear below. If any information is incorrect or requires updating, please make your amendments directly in the relevant fields before clicking "Finalise Metadata". Do not add notes or comments within the fields themselves.</p>
                 {hasCoverImage ? (
                   <p>As you have provided a cover image, we will prepare your cover using this content. Images must be cleared of all copyrights and permissions and you must provide full information on source and ownership.</p>
                 ) : (
