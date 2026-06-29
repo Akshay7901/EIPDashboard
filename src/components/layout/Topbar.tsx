@@ -49,6 +49,14 @@ const Topbar: React.FC<TopbarProps> = ({ title }) => {
         >
           Peer Reviewers
         </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate('/designers')}
+          className="text-sm"
+        >
+          Designers
+        </Button>
 
         {/* Profile Dropdown */}
         <div className="relative" ref={dropdownRef}>

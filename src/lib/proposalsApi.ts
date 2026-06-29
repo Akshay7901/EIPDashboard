@@ -43,6 +43,31 @@ export const peerReviewersApi = {
   },
 };
 
+// Designers
+export interface Designer {
+  id: string;
+  email: string;
+  name: string;
+  created_at?: string;
+}
+
+export const designersApi = {
+  list: async (): Promise<Designer[]> => {
+    const { data } = await api.get('/api/proposals/users/designers');
+    if (Array.isArray(data)) return data;
+    if (data?.designers && Array.isArray(data.designers)) return data.designers;
+    if (data?.data && Array.isArray(data.data)) return data.data;
+    return [];
+  },
+  create: async (designer: { email: string; name: string }): Promise<Designer> => {
+    const { data } = await api.post('/api/proposals/users/designers', designer);
+    return data;
+  },
+  delete: async (designerId: string): Promise<void> => {
+    await api.delete(`/api/proposals/users/designers/${encodeURIComponent(designerId)}`);
+  },
+};
+
 // Reviews API (peer review submission and retrieval)
 export const reviewsApi = {
   get: async (ticketNumber: string): Promise<any> => {

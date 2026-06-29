@@ -306,6 +306,13 @@ const Proposals: React.FC = () => {
                 <span className="sm:hidden">Reviewers</span>
               </Button>
             )}
+            {isReviewer1 && (
+              <Button variant="outline" className="gap-2 text-xs sm:text-sm" onClick={() => navigate("/designers")}>
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Designers</span>
+                <span className="sm:hidden">Designers</span>
+              </Button>
+            )}
             <ProfileDropdown />
           </div>
         </div>
