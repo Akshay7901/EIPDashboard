@@ -13,6 +13,7 @@ import Proposals from "./pages/Proposals";
 import ProposalDetails from "./pages/ProposalDetails";
 import RequestMoreInfo from "./pages/RequestMoreInfo";
 import PeerReviewers from "./pages/PeerReviewers";
+import Designers from "./pages/Designers";
 import AuthorDashboard from "./pages/AuthorDashboard";
 import AuthorProposalDetails from "./pages/AuthorProposalDetails";
 import DesignerDashboard from "./pages/DesignerDashboard";
@@ -64,6 +65,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <PeerReviewers />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/designers"
+              element={
+                <ProtectedRoute>
+                  <Designers />
                 </ProtectedRoute>
               }
             />
