@@ -15,6 +15,7 @@ import RequestMoreInfo from "./pages/RequestMoreInfo";
 import PeerReviewers from "./pages/PeerReviewers";
 import AuthorDashboard from "./pages/AuthorDashboard";
 import AuthorProposalDetails from "./pages/AuthorProposalDetails";
+import DesignerDashboard from "./pages/DesignerDashboard";
 import ContractSigning from "./pages/ContractSigning";
 import ContractComplete from "./pages/ContractComplete";
 import NotFound from "./pages/NotFound";
@@ -79,6 +80,15 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AuthorProposalDetails />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/designer/proposals"
+              element={
+                <ProtectedRoute>
+                  <DesignerDashboard />
                 </ProtectedRoute>
               }
             />

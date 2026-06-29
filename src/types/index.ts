@@ -8,7 +8,7 @@ export interface User {
   role?: ReviewerRole | null;
 }
 
-export type ReviewerRole = 'reviewer_1' | 'reviewer_2' | 'author';
+export type ReviewerRole = 'reviewer_1' | 'reviewer_2' | 'author' | 'designer';
 
 export interface Profile {
   id: string;

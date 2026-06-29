@@ -1,0 +1,92 @@
+import api from '@/lib/api';
+
+export type CoverBinding = 'hb' | 'pb' | 'ebook';
+
+export interface DesignerCoverSlot {
+  binding: CoverBinding;
+  uploaded: boolean;
+  filename?: string | null;
+  uploaded_at?: string | null;
+}
+
+export interface DesignerProposal {
+  ticket_number: string;
+  full_title?: string | null;
+  title?: string | null;
+  subtitle?: string | null;
+  category?: string | null; // 'Authored' | 'Edited'
+  display_names?: string[] | string | null;
+  covers?: Partial<Record<CoverBinding, { uploaded?: boolean; filename?: string | null; uploaded_at?: string | null }>>;
+  [key: string]: any;
+}
+
+const BINDINGS: CoverBinding[] = ['hb', 'pb', 'ebook'];
+
+const pickString = (...vals: any[]): string | null => {
+  for (const v of vals) {
+    if (typeof v === 'string' && v.trim()) return v.trim();
+  }
+  return null;
+};
+
+export const normalizeDesignerProposal = (raw: any): DesignerProposal => {
+  const covers: DesignerProposal['covers'] = {};
+  const rawCovers = raw?.covers || raw?.cover_files || {};
+  for (const b of BINDINGS) {
+    const c = rawCovers?.[b] || raw?.[`cover_${b}`] || null;
+    if (c && (c.uploaded || c.filename || c.url || c.file_name)) {
+      covers[b] = {
+        uploaded: true,
+        filename: pickString(c.filename, c.file_name, c.name),
+        uploaded_at: pickString(c.uploaded_at, c.created_at, c.updated_at),
+      };
+    } else {
+      covers[b] = { uploaded: false, filename: null, uploaded_at: null };
+    }
+  }
+
+  const displayRaw = raw?.display_names ?? raw?.display_name ?? raw?.authors ?? raw?.editors;
+  let display_names: string[] = [];
+  if (Array.isArray(displayRaw)) {
+    display_names = displayRaw.map((x: any) => (typeof x === 'string' ? x : x?.name)).filter(Boolean);
+  } else if (typeof displayRaw === 'string' && displayRaw.trim()) {
+    display_names = [displayRaw.trim()];
+  }
+
+  return {
+    ...raw,
+    ticket_number: raw.ticket_number || raw.ticket || raw.id,
+    full_title: pickString(raw.full_title, raw.fullTitle),
+    title: pickString(raw.title, raw.book_title),
+    subtitle: pickString(raw.subtitle, raw.book_subtitle),
+    category: pickString(raw.category, raw.book_type, raw.publication_type),
+    display_names,
+    covers,
+  };
+};
+
+export const designerApi = {
+  list: async (): Promise<DesignerProposal[]> => {
+    const { data } = await api.get('/api/proposals/designer/proposals');
+    const arr = Array.isArray(data) ? data : data?.proposals || data?.data || [];
+    return arr.map(normalizeDesignerProposal);
+  },
+
+  uploadCover: async (ticket: string, binding: CoverBinding, file: File): Promise<any> => {
+    const form = new FormData();
+    form.append('file', file);
+    const { data } = await api.post(
+      `/api/proposals/designer/proposals/${encodeURIComponent(ticket)}/cover/${binding}`,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    return data;
+  },
+
+  getCoverUrl: async (ticket: string, binding: CoverBinding): Promise<string> => {
+    const { data } = await api.get(
+      `/api/proposals/designer/proposals/${encodeURIComponent(ticket)}/cover/${binding}`
+    );
+    return data?.url || data?.presigned_url || data?.signed_url || '';
+  },
+};

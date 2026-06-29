@@ -56,6 +56,8 @@ const Login: React.FC = () => {
 
     if (userRole === 'author') {
       navigate("/author/proposals");
+    } else if (userRole === 'designer' || userRole === 'cover_designer') {
+      navigate("/designer/proposals");
     } else {
       navigate("/proposals");
     }
