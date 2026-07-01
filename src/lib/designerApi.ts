@@ -107,4 +107,15 @@ export const designerApi = {
       filename: data?.filename || null,
     };
   },
+
+  getAuthorCoverDownloadUrl: async (ticket: string): Promise<{ url: string; filename?: string | null }> => {
+    const { data } = await api.get(
+      `/api/proposals/designer/proposals/${encodeURIComponent(ticket)}/author-cover`,
+      { params: { download: true, disposition: 'attachment' } }
+    );
+    return {
+      url: data?.download_url || data?.url || data?.presigned_url || data?.signed_url || '',
+      filename: data?.filename || null,
+    };
+  },
 };

@@ -174,24 +174,18 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
     if (!authorCoverUrl || downloadingCover) return;
     setDownloadingCover(true);
     try {
-      const freshCover = await designerApi.getAuthorCoverUrl(proposal.ticket_number);
+      const freshCover = await designerApi.getAuthorCoverDownloadUrl(proposal.ticket_number);
       const downloadUrl = freshCover.url || authorCoverUrl;
       const filename = freshCover.filename || proposal.author_cover?.filename || 'author-reference';
       if (freshCover.url) setAuthorCoverUrl(freshCover.url);
-
-      const response = await fetch(downloadUrl);
-      if (!response.ok) throw new Error('Download failed');
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = blobUrl;
+      a.href = downloadUrl;
       a.download = filename;
       a.rel = 'noopener';
       a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
     } catch (e: any) {
       toast({
         variant: 'destructive',
