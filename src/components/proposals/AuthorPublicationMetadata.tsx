@@ -900,19 +900,13 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
                   </Select>
                   <div className="flex-1 space-y-1">
                     {cr.field === "Book description" ? (
-                      <>
-                        <Textarea
-                          placeholder="Requested new value"
-                          value={cr.newValue}
-                          onChange={(e) => updateChangeRequest(idx, "newValue", e.target.value)}
-                          maxLength={BOOK_DESCRIPTION_MAX_CHARS}
-                          rows={4}
-                          className="text-sm bg-background"
-                        />
-                        <div className="text-xs text-right text-muted-foreground/70">
-                          {countCharacters(cr.newValue).toLocaleString()} / {BOOK_DESCRIPTION_MAX_CHARS.toLocaleString()} characters
-                        </div>
-                      </>
+                      <Textarea
+                        placeholder="Requested new value"
+                        value={cr.newValue}
+                        onChange={(e) => updateChangeRequest(idx, "newValue", e.target.value)}
+                        rows={4}
+                        className="text-sm bg-background"
+                      />
                     ) : (
                       <Input placeholder="Requested new value" value={cr.newValue} onChange={(e) => updateChangeRequest(idx, "newValue", e.target.value)} className="text-sm" />
                     )}
