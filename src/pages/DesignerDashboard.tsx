@@ -237,14 +237,18 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
             <div className="text-sm font-medium text-foreground">Author's Reference Image</div>
             <div className="flex items-center gap-3">
               {authorCoverUrl && (
-                <a
-                  href={authorCoverUrl}
-                  download={proposal.author_cover.filename || 'author-reference'}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-[#3d5a47] hover:underline"
+                <button
+                  onClick={handleDownloadAuthorCover}
+                  disabled={downloadingCover}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-[#3d5a47] hover:underline disabled:opacity-60"
                 >
-                  <Download className="h-3.5 w-3.5" />
-                  Download
-                </a>
+                  {downloadingCover ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5" />
+                  )}
+                  {downloadingCover ? 'Downloading…' : 'Download'}
+                </button>
               )}
               <div className="text-xs text-muted-foreground break-all text-right">
                 {proposal.author_cover.filename}
