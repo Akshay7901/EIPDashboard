@@ -174,23 +174,22 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
     if (!authorCoverUrl || downloadingCover) return;
     setDownloadingCover(true);
     try {
-      const freshCover = await designerApi.getAuthorCoverDownloadUrl(proposal.ticket_number);
-      const downloadUrl = freshCover.url || authorCoverUrl;
-      const filename = freshCover.filename || proposal.author_cover?.filename || 'author-reference';
-      if (freshCover.url) setAuthorCoverUrl(freshCover.url);
+      const { blob, filename: downloadedFilename } = await designerApi.downloadAuthorCover(proposal.ticket_number);
+      const filename = downloadedFilename || proposal.author_cover?.filename || 'author-reference';
+      const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = downloadUrl;
+      a.href = blobUrl;
       a.download = filename;
-      a.rel = 'noopener';
       a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
     } catch (e: any) {
       toast({
         variant: 'destructive',
         title: 'Download failed',
-        description: e?.message || 'Please try again.',
+        description: e?.message || 'The image server blocked browser download. Please try again.',
       });
     } finally {
       setDownloadingCover(false);
