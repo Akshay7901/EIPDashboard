@@ -1,1 +1,4 @@
 project_id = "etkisllfnveodhzseufm"
+
+[functions.download-author-cover]
+verify_jwt = false

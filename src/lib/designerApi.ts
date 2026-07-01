@@ -1,4 +1,3 @@
-import { supabase } from '@/integrations/supabase/client';
 import api from '@/lib/api';
 
 export type CoverBinding = 'hb' | 'pb' | 'ebook';
@@ -23,6 +22,8 @@ export interface DesignerProposal {
 }
 
 const BINDINGS: CoverBinding[] = ['hb', 'pb', 'ebook'];
+const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+const FUNCTIONS_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 const filenameFromContentDisposition = (value?: string | null): string | null => {
   if (!value) return null;
@@ -132,16 +133,28 @@ export const designerApi = {
     const token = localStorage.getItem('auth_token');
     if (!token) throw new Error('Please sign in again.');
 
-    const { data, error } = await supabase.functions.invoke('download-author-cover', {
+    const response = await fetch(`${FUNCTIONS_URL}/download-author-cover?ticket=${encodeURIComponent(ticket)}`, {
       method: 'GET',
-      headers: { Authorization: `Bearer ${token}` },
-      body: undefined,
-      query: { ticket },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: FUNCTIONS_KEY,
+      },
     });
 
-    if (error) throw new Error(error.message || 'Download failed.');
-    if (!(data instanceof Blob)) throw new Error('Download failed.');
+    if (!response.ok) {
+      let message = 'Download failed.';
+      try {
+        const payload = await response.json();
+        message = payload?.error || message;
+      } catch {
+        // Keep default message when the response is not JSON.
+      }
+      throw new Error(message);
+    }
 
-    return { blob: data, filename: null };
+    return {
+      blob: await response.blob(),
+      filename: filenameFromContentDisposition(response.headers.get('content-disposition')),
+    };
   },
 };
