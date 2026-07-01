@@ -123,6 +123,7 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
   const [authorCoverUrl, setAuthorCoverUrl] = useState<string | null>(null);
   const [authorCoverLoading, setAuthorCoverLoading] = useState(false);
   const [authorCoverError, setAuthorCoverError] = useState<string | null>(null);
+  const [downloadingCover, setDownloadingCover] = useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -166,6 +167,28 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
       });
     } finally {
       setBusyBinding(null);
+    }
+  };
+
+  const handleDownloadAuthorCover = async () => {
+    if (!authorCoverUrl || downloadingCover) return;
+    setDownloadingCover(true);
+    try {
+      const response = await fetch(authorCoverUrl);
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = proposal.author_cover?.filename || 'author-reference';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch (e: any) {
+      window.open(authorCoverUrl, '_blank', 'noopener,noreferrer');
+    } finally {
+      setDownloadingCover(false);
     }
   };
 
@@ -214,14 +237,18 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
             <div className="text-sm font-medium text-foreground">Author's Reference Image</div>
             <div className="flex items-center gap-3">
               {authorCoverUrl && (
-                <a
-                  href={authorCoverUrl}
-                  download={proposal.author_cover.filename || 'author-reference'}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-[#3d5a47] hover:underline"
+                <button
+                  onClick={handleDownloadAuthorCover}
+                  disabled={downloadingCover}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-[#3d5a47] hover:underline disabled:opacity-60"
                 >
-                  <Download className="h-3.5 w-3.5" />
-                  Download
-                </a>
+                  {downloadingCover ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5" />
+                  )}
+                  {downloadingCover ? 'Downloading…' : 'Download'}
+                </button>
               )}
               <div className="text-xs text-muted-foreground break-all text-right">
                 {proposal.author_cover.filename}
