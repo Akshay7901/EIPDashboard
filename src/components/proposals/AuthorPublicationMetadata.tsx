@@ -132,6 +132,11 @@ interface ChangeRequestField {
   newValue: string;
 }
 
+const BOOK_DESCRIPTION_MAX_CHARS = 2000;
+const QUERY_TEXT_MAX_CHARS = 2000;
+
+const countCharacters = (value: string) => Array.from(value || "").length;
+
 const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
   proposal,
   contractSigned,
@@ -492,10 +497,35 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
       toast({ title: "No changes", description: "Please specify at least one field and its new value." });
       return;
     }
+
+    const overLimitBookDescription = validRequests.find(
+      (r) => r.field === "Book description" && countCharacters(r.newValue) > BOOK_DESCRIPTION_MAX_CHARS
+    );
+    if (overLimitBookDescription) {
+      toast({
+        title: "Book description too long",
+        description: `Please reduce the book description to ${BOOK_DESCRIPTION_MAX_CHARS.toLocaleString()} characters. It is currently ${countCharacters(overLimitBookDescription.newValue).toLocaleString()} characters.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSubmittingQuery(true);
     try {
-      const queryText = validRequests.map((r) => `**${r.field}**: ${r.newValue}`).join("\n");
       const fields = validRequests.map((r) => r.field.toLowerCase().replace(/[\s/()]+/g, "_"));
+      const queryText = validRequests.length === 1 && validRequests[0].field === "Book description"
+        ? validRequests[0].newValue.trim()
+        : validRequests.map((r) => `**${r.field}**: ${r.newValue}`).join("\n");
+
+      if (countCharacters(queryText) > QUERY_TEXT_MAX_CHARS) {
+        toast({
+          title: "Change request too long",
+          description: `Please keep each change request below ${QUERY_TEXT_MAX_CHARS.toLocaleString()} characters, or submit the book description on its own.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       await metadataQueriesApi.raise(ticketNumber, queryText, fields);
       queryClient.invalidateQueries({ queryKey: ["metadata-queries", ticketNumber] });
       toast({ title: "Request submitted", description: "Your change request has been sent to the reviewer." });
@@ -894,7 +924,25 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
                       {FIELD_OPTIONS.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Input placeholder="Requested new value" value={cr.newValue} onChange={(e) => updateChangeRequest(idx, "newValue", e.target.value)} className="flex-1 text-sm" />
+                  <div className="flex-1 space-y-1">
+                    {cr.field === "Book description" ? (
+                      <>
+                        <Textarea
+                          placeholder="Requested new value"
+                          value={cr.newValue}
+                          onChange={(e) => updateChangeRequest(idx, "newValue", e.target.value)}
+                          maxLength={BOOK_DESCRIPTION_MAX_CHARS}
+                          rows={4}
+                          className="text-sm bg-background"
+                        />
+                        <div className="text-xs text-right text-muted-foreground/70">
+                          {countCharacters(cr.newValue).toLocaleString()} / {BOOK_DESCRIPTION_MAX_CHARS.toLocaleString()} characters
+                        </div>
+                      </>
+                    ) : (
+                      <Input placeholder="Requested new value" value={cr.newValue} onChange={(e) => updateChangeRequest(idx, "newValue", e.target.value)} className="text-sm" />
+                    )}
+                  </div>
                   {changeRequests.length > 1 && <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => removeChangeRequest(idx)}><Trash2 className="h-4 w-4" /></Button>}
                 </div>
               ))}
