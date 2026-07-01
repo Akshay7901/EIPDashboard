@@ -170,6 +170,28 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
     }
   };
 
+  const handleDownloadAuthorCover = async () => {
+    if (!authorCoverUrl || downloadingCover) return;
+    setDownloadingCover(true);
+    try {
+      const response = await fetch(authorCoverUrl);
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = proposal.author_cover?.filename || 'author-reference';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch (e: any) {
+      window.open(authorCoverUrl, '_blank', 'noopener,noreferrer');
+    } finally {
+      setDownloadingCover(false);
+    }
+  };
+
   const names = Array.isArray(proposal.display_names) ? proposal.display_names.join(', ') : '';
 
   return (
