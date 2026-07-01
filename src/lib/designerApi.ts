@@ -17,6 +17,7 @@ export interface DesignerProposal {
   category?: string | null; // 'Authored' | 'Edited'
   display_names?: string[] | string | null;
   covers?: Partial<Record<CoverBinding, { uploaded?: boolean; filename?: string | null; uploaded_at?: string | null }>>;
+  author_cover?: { filename?: string | null; width_px?: number | null; height_px?: number | null } | null;
   [key: string]: any;
 }
 
@@ -62,6 +63,13 @@ export const normalizeDesignerProposal = (raw: any): DesignerProposal => {
     category: pickString(raw.category, raw.book_type, raw.publication_type),
     display_names,
     covers,
+    author_cover: raw?.author_cover
+      ? {
+          filename: pickString(raw.author_cover.filename, raw.author_cover.file_name),
+          width_px: raw.author_cover.width_px ?? null,
+          height_px: raw.author_cover.height_px ?? null,
+        }
+      : null,
   };
 };
 
@@ -88,5 +96,15 @@ export const designerApi = {
       `/api/proposals/designer/proposals/${encodeURIComponent(ticket)}/cover/${binding}`
     );
     return data?.url || data?.presigned_url || data?.signed_url || '';
+  },
+
+  getAuthorCoverUrl: async (ticket: string): Promise<{ url: string; filename?: string | null }> => {
+    const { data } = await api.get(
+      `/api/proposals/designer/proposals/${encodeURIComponent(ticket)}/author-cover`
+    );
+    return {
+      url: data?.url || data?.presigned_url || data?.signed_url || '',
+      filename: data?.filename || null,
+    };
   },
 };
