@@ -22,6 +22,8 @@ export interface DesignerProposal {
 }
 
 const BINDINGS: CoverBinding[] = ['hb', 'pb', 'ebook'];
+const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+const FUNCTIONS_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 const filenameFromContentDisposition = (value?: string | null): string | null => {
   if (!value) return null;
@@ -128,31 +130,31 @@ export const designerApi = {
   },
 
   downloadAuthorCover: async (ticket: string): Promise<{ blob: Blob; filename?: string | null }> => {
-    const response = await api.get(
-      `/api/proposals/designer/proposals/${encodeURIComponent(ticket)}/author-cover`,
-      {
-        params: { download: true, disposition: 'attachment' },
-        responseType: 'blob',
-        headers: { Accept: 'image/*,application/octet-stream,application/json' },
+    const token = localStorage.getItem('auth_token');
+    if (!token) throw new Error('Please sign in again.');
+
+    const response = await fetch(`${FUNCTIONS_URL}/download-author-cover?ticket=${encodeURIComponent(ticket)}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: FUNCTIONS_KEY,
+      },
+    });
+
+    if (!response.ok) {
+      let message = 'Download failed.';
+      try {
+        const payload = await response.json();
+        message = payload?.error || message;
+      } catch {
+        // Keep default message when the response is not JSON.
       }
-    );
-
-    const blob = response.data as Blob;
-    const contentType = response.headers?.['content-type'] || blob.type || '';
-    const headerFilename = filenameFromContentDisposition(response.headers?.['content-disposition']);
-
-    if (contentType.includes('application/json')) {
-      const payload = JSON.parse(await blob.text());
-      const url = payload?.download_url || payload?.url || payload?.presigned_url || payload?.signed_url;
-      if (!url) throw new Error('No image URL returned.');
-      const imageResponse = await fetch(url);
-      if (!imageResponse.ok) throw new Error('Download failed.');
-      return {
-        blob: await imageResponse.blob(),
-        filename: payload?.filename || headerFilename || null,
-      };
+      throw new Error(message);
     }
 
-    return { blob, filename: headerFilename };
+    return {
+      blob: await response.blob(),
+      filename: filenameFromContentDisposition(response.headers.get('content-disposition')),
+    };
   },
 };
