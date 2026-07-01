@@ -212,11 +212,23 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
         <div className="rounded-lg border border-border bg-[#faf8f5] p-4 space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-medium text-foreground">Author's Reference Image</div>
-            <div className="text-xs text-muted-foreground break-all text-right">
-              {proposal.author_cover.filename}
-              {proposal.author_cover.width_px && proposal.author_cover.height_px
-                ? ` · ${proposal.author_cover.width_px} × ${proposal.author_cover.height_px} px`
-                : ''}
+            <div className="flex items-center gap-3">
+              {authorCoverUrl && (
+                <a
+                  href={authorCoverUrl}
+                  download={proposal.author_cover.filename || 'author-reference'}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-[#3d5a47] hover:underline"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Download
+                </a>
+              )}
+              <div className="text-xs text-muted-foreground break-all text-right">
+                {proposal.author_cover.filename}
+                {proposal.author_cover.width_px && proposal.author_cover.height_px
+                  ? ` · ${proposal.author_cover.width_px} × ${proposal.author_cover.height_px} px`
+                  : ''}
+              </div>
             </div>
           </div>
           {authorCoverLoading ? (
