@@ -28,6 +28,8 @@ interface EditableRowProps {
   disabled?: boolean;
   type?: "text" | "email" | "textarea";
   authorChange?: { old: string; new: string } | null;
+  maxLength?: number;
+  showCharacterCount?: boolean;
 }
 
 const EditableRow: React.FC<EditableRowProps> = ({
@@ -38,53 +40,84 @@ const EditableRow: React.FC<EditableRowProps> = ({
   disabled,
   type = "text",
   authorChange,
-}) => (
-  <div className="grid grid-cols-[200px_1fr] border-b border-border">
-    <div className="py-3 px-4 text-sm font-medium text-muted-foreground bg-muted/30">
-      {label}
-      {sublabel && (
-        <span className="block text-xs font-normal text-muted-foreground/60">
-          {sublabel}
-        </span>
-      )}
+  maxLength,
+  showCharacterCount,
+}) => {
+  const characterCount = Array.from(value || "").length;
+  const isOverLimit = typeof maxLength === "number" && characterCount > maxLength;
+
+  return (
+    <div className="grid grid-cols-[200px_1fr] border-b border-border">
+      <div className="py-3 px-4 text-sm font-medium text-muted-foreground bg-muted/30">
+        {label}
+        {sublabel && (
+          <span className="block text-xs font-normal text-muted-foreground/60">
+            {sublabel}
+          </span>
+        )}
+      </div>
+      <div className="py-2 px-4 flex flex-col gap-1">
+        {authorChange && (
+          <div className="text-sm mb-1">
+            <span className="line-through text-foreground">{authorChange.old}</span>{" "}
+            <span className="text-destructive font-medium">{authorChange.new}</span>
+          </div>
+        )}
+        {type === "textarea" ? (
+          <Textarea
+            value={value}
+            onChange={(e) => {
+              onChange(e.target.value);
+              e.target.style.height = "auto";
+              e.target.style.height = e.target.scrollHeight + "px";
+            }}
+            ref={(el) => {
+              if (el) {
+                el.style.height = "auto";
+                el.style.height = el.scrollHeight + "px";
+              }
+            }}
+            disabled={disabled}
+            maxLength={maxLength}
+            className={`resize-none overflow-hidden ${disabled ? "bg-muted/40 text-muted-foreground cursor-not-allowed" : ""}`}
+            rows={1}
+          />
+        ) : (
+          <Input
+            type={type}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            disabled={disabled}
+            maxLength={maxLength}
+            className={disabled ? "bg-muted/40 text-muted-foreground cursor-not-allowed" : ""}
+          />
+        )}
+        {showCharacterCount && typeof maxLength === "number" && (
+          <div className={`text-xs text-right ${isOverLimit ? "text-destructive" : "text-muted-foreground/70"}`}>
+            {characterCount.toLocaleString()} / {maxLength.toLocaleString()} characters
+          </div>
+        )}
+      </div>
     </div>
-    <div className="py-2 px-4 flex flex-col gap-1">
-      {authorChange && (
-        <div className="text-sm mb-1">
-          <span className="line-through text-foreground">{authorChange.old}</span>{" "}
-          <span className="text-destructive font-medium">{authorChange.new}</span>
-        </div>
-      )}
-      {type === "textarea" ? (
-        <Textarea
-          value={value}
-          onChange={(e) => {
-            onChange(e.target.value);
-            e.target.style.height = "auto";
-            e.target.style.height = e.target.scrollHeight + "px";
-          }}
-          ref={(el) => {
-            if (el) {
-              el.style.height = "auto";
-              el.style.height = el.scrollHeight + "px";
-            }
-          }}
-          disabled={disabled}
-          className={`resize-none overflow-hidden ${disabled ? "bg-muted/40 text-muted-foreground cursor-not-allowed" : ""}`}
-          rows={1}
-        />
-      ) : (
-        <Input
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={disabled}
-          className={disabled ? "bg-muted/40 text-muted-foreground cursor-not-allowed" : ""}
-        />
-      )}
-    </div>
-  </div>
-);
+  );
+};
+
+const BOOK_DESCRIPTION_MAX_CHARS = 2000;
+
+const validateBookDescriptionLength = (bookDescription: string) => {
+  const characterCount = Array.from(bookDescription || "").length;
+
+  if (characterCount > BOOK_DESCRIPTION_MAX_CHARS) {
+    toast({
+      title: "Book description too long",
+      description: `Please reduce the book description to ${BOOK_DESCRIPTION_MAX_CHARS.toLocaleString()} characters. It is currently ${characterCount.toLocaleString()} characters.`,
+      variant: "destructive",
+    });
+    return false;
+  }
+
+  return true;
+};
 
 const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
   <div className="bg-[#3d5a47] text-white py-2.5 px-4">
