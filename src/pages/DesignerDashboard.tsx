@@ -120,6 +120,7 @@ const CoverSlot: React.FC<{
 const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) => {
   const qc = useQueryClient();
   const [busyBinding, setBusyBinding] = useState<CoverBinding | null>(null);
+  const [openingAuthorCover, setOpeningAuthorCover] = useState(false);
 
   const allUploaded = BINDINGS.every((b) => proposal.covers?.[b]?.uploaded);
 
@@ -141,6 +142,23 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
   };
 
   const names = Array.isArray(proposal.display_names) ? proposal.display_names.join(', ') : '';
+
+  const handleOpenAuthorCover = async () => {
+    if (openingAuthorCover) return;
+    setOpeningAuthorCover(true);
+    try {
+      const { url } = await designerApi.getAuthorCoverUrl(proposal.ticket_number);
+      if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } else {
+        toast({ variant: 'destructive', title: 'Could not open image', description: 'No URL returned.' });
+      }
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Could not open image', description: e?.message || 'Try again.' });
+    } finally {
+      setOpeningAuthorCover(false);
+    }
+  };
 
   return (
     <Card className="p-5 space-y-4 border-border">
@@ -178,6 +196,39 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
           />
         ))}
       </div>
+
+      {proposal.author_cover && (
+        <div className="rounded-lg border border-border bg-[#faf8f5] p-4 flex items-center gap-4">
+          <button
+            onClick={handleOpenAuthorCover}
+            disabled={openingAuthorCover}
+            className="shrink-0 h-20 w-16 rounded border border-border bg-white flex items-center justify-center text-[#3d5a47] hover:border-[#3d5a47] transition-colors"
+            aria-label="Open author reference image"
+          >
+            {openingAuthorCover ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <ImageIcon className="h-6 w-6" />
+            )}
+          </button>
+          <div className="min-w-0 text-sm">
+            <div className="font-medium text-foreground">Author's Reference Image</div>
+            <button
+              onClick={handleOpenAuthorCover}
+              disabled={openingAuthorCover}
+              className="text-xs text-muted-foreground hover:text-[#3d5a47] flex items-center gap-1 mt-0.5"
+            >
+              <ExternalLink className="h-3 w-3" />
+              <span className="break-all">{proposal.author_cover.filename || 'View image'}</span>
+            </button>
+            {(proposal.author_cover.width_px && proposal.author_cover.height_px) ? (
+              <div className="text-xs text-muted-foreground mt-0.5">
+                {proposal.author_cover.width_px} × {proposal.author_cover.height_px} px
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
     </Card>
   );
 };
