@@ -102,23 +102,6 @@ const EditableRow: React.FC<EditableRowProps> = ({
   );
 };
 
-const BOOK_DESCRIPTION_MAX_CHARS = 2000;
-
-const validateBookDescriptionLength = (bookDescription: string) => {
-  const characterCount = Array.from(bookDescription || "").length;
-
-  if (characterCount > BOOK_DESCRIPTION_MAX_CHARS) {
-    toast({
-      title: "Book description too long",
-      description: `Please reduce the book description to ${BOOK_DESCRIPTION_MAX_CHARS.toLocaleString()} characters. It is currently ${characterCount.toLocaleString()} characters.`,
-      variant: "destructive",
-    });
-    return false;
-  }
-
-  return true;
-};
-
 const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
   <div className="bg-[#3d5a47] text-white py-2.5 px-4">
     <p className="text-sm font-semibold uppercase tracking-wide">{title}</p>
@@ -417,8 +400,6 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
   };
 
   const handleSaveDraft = async () => {
-    if (!validateBookDescriptionLength(bookDesc)) return;
-
     setSaving(true);
     try {
       await metadataApi.update(ticketNumber, {
@@ -465,8 +446,6 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
   };
 
   const handleSubmitToAuthor = async () => {
-    if (!validateBookDescriptionLength(bookDesc)) return;
-
     setSubmitting(true);
     try {
       await metadataApi.update(ticketNumber, { ...buildPayload(), notes: "Submitted to author for finalization" });
@@ -481,8 +460,6 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
   };
 
   const handleRespondAndSubmit = async () => {
-    if (!validateBookDescriptionLength(bookDesc)) return;
-
     setSubmitting(true);
     try {
       // 1. Respond to all pending queries
@@ -658,14 +635,11 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
 
         <EditableRow
           label="Book description"
-          sublabel="(max 2000 characters)"
           value={bookDesc}
           onChange={setBookDesc}
           type="textarea"
           disabled={isFormDisabled}
           authorChange={authorChanges["book_description"] || null}
-          maxLength={BOOK_DESCRIPTION_MAX_CHARS}
-          showCharacterCount
         />
         <EditableRow label="Keywords/Tags" value={keywords} onChange={setKeywords} type="textarea" disabled={isFormDisabled} authorChange={authorChanges["keywords"] || null} />
 

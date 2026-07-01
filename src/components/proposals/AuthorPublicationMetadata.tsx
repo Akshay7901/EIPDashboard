@@ -132,11 +132,6 @@ interface ChangeRequestField {
   newValue: string;
 }
 
-const BOOK_DESCRIPTION_MAX_CHARS = 2000;
-const QUERY_TEXT_MAX_CHARS = 2000;
-
-const countCharacters = (value: string) => Array.from(value || "").length;
-
 const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
   proposal,
   contractSigned,
@@ -498,33 +493,12 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
       return;
     }
 
-    const overLimitBookDescription = validRequests.find(
-      (r) => r.field === "Book description" && countCharacters(r.newValue) > BOOK_DESCRIPTION_MAX_CHARS
-    );
-    if (overLimitBookDescription) {
-      toast({
-        title: "Book description too long",
-        description: `Please reduce the book description to ${BOOK_DESCRIPTION_MAX_CHARS.toLocaleString()} characters. It is currently ${countCharacters(overLimitBookDescription.newValue).toLocaleString()} characters.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     setSubmittingQuery(true);
     try {
       const fields = validRequests.map((r) => r.field.toLowerCase().replace(/[\s/()]+/g, "_"));
       const queryText = validRequests.length === 1 && validRequests[0].field === "Book description"
         ? validRequests[0].newValue.trim()
         : validRequests.map((r) => `**${r.field}**: ${r.newValue}`).join("\n");
-
-      if (countCharacters(queryText) > QUERY_TEXT_MAX_CHARS) {
-        toast({
-          title: "Change request too long",
-          description: `Please keep each change request below ${QUERY_TEXT_MAX_CHARS.toLocaleString()} characters, or submit the book description on its own.`,
-          variant: "destructive",
-        });
-        return;
-      }
 
       await metadataQueriesApi.raise(ticketNumber, queryText, fields);
       queryClient.invalidateQueries({ queryKey: ["metadata-queries", ticketNumber] });
@@ -655,7 +629,7 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
         {/* Book Information — READ ONLY */}
         <SectionHeader title="Book Information" />
 
-        <ReadOnlyRow label="Book description" sublabel="(max 2000 characters)" value={bookDescription} />
+        <ReadOnlyRow label="Book description" value={bookDescription} />
         <ReadOnlyRow label="Keywords/Tags" value={keywordsVal} />
 
         {/* Cover Image — moved to bottom */}
