@@ -23,6 +23,14 @@ export interface DesignerProposal {
 
 const BINDINGS: CoverBinding[] = ['hb', 'pb', 'ebook'];
 
+const filenameFromContentDisposition = (value?: string | null): string | null => {
+  if (!value) return null;
+  const utf8Match = value.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) return decodeURIComponent(utf8Match[1].replace(/['"]/g, ''));
+  const filenameMatch = value.match(/filename="?([^";]+)"?/i);
+  return filenameMatch?.[1] ? filenameMatch[1].trim() : null;
+};
+
 const pickString = (...vals: any[]): string | null => {
   for (const v of vals) {
     if (typeof v === 'string' && v.trim()) return v.trim();
@@ -117,5 +125,34 @@ export const designerApi = {
       url: data?.download_url || data?.url || data?.presigned_url || data?.signed_url || '',
       filename: data?.filename || null,
     };
+  },
+
+  downloadAuthorCover: async (ticket: string): Promise<{ blob: Blob; filename?: string | null }> => {
+    const response = await api.get(
+      `/api/proposals/designer/proposals/${encodeURIComponent(ticket)}/author-cover`,
+      {
+        params: { download: true, disposition: 'attachment' },
+        responseType: 'blob',
+        headers: { Accept: 'image/*,application/octet-stream,application/json' },
+      }
+    );
+
+    const blob = response.data as Blob;
+    const contentType = response.headers?.['content-type'] || blob.type || '';
+    const headerFilename = filenameFromContentDisposition(response.headers?.['content-disposition']);
+
+    if (contentType.includes('application/json')) {
+      const payload = JSON.parse(await blob.text());
+      const url = payload?.download_url || payload?.url || payload?.presigned_url || payload?.signed_url;
+      if (!url) throw new Error('No image URL returned.');
+      const imageResponse = await fetch(url);
+      if (!imageResponse.ok) throw new Error('Download failed.');
+      return {
+        blob: await imageResponse.blob(),
+        filename: payload?.filename || headerFilename || null,
+      };
+    }
+
+    return { blob, filename: headerFilename };
   },
 };
