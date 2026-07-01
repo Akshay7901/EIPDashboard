@@ -1,3 +1,4 @@
+import { supabase } from '@/integrations/supabase/client';
 import api from '@/lib/api';
 
 export type CoverBinding = 'hb' | 'pb' | 'ebook';
@@ -128,31 +129,19 @@ export const designerApi = {
   },
 
   downloadAuthorCover: async (ticket: string): Promise<{ blob: Blob; filename?: string | null }> => {
-    const response = await api.get(
-      `/api/proposals/designer/proposals/${encodeURIComponent(ticket)}/author-cover`,
-      {
-        params: { download: true, disposition: 'attachment' },
-        responseType: 'blob',
-        headers: { Accept: 'image/*,application/octet-stream,application/json' },
-      }
-    );
+    const token = localStorage.getItem('auth_token');
+    if (!token) throw new Error('Please sign in again.');
 
-    const blob = response.data as Blob;
-    const contentType = response.headers?.['content-type'] || blob.type || '';
-    const headerFilename = filenameFromContentDisposition(response.headers?.['content-disposition']);
+    const { data, error } = await supabase.functions.invoke('download-author-cover', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}` },
+      body: undefined,
+      query: { ticket },
+    });
 
-    if (contentType.includes('application/json')) {
-      const payload = JSON.parse(await blob.text());
-      const url = payload?.download_url || payload?.url || payload?.presigned_url || payload?.signed_url;
-      if (!url) throw new Error('No image URL returned.');
-      const imageResponse = await fetch(url);
-      if (!imageResponse.ok) throw new Error('Download failed.');
-      return {
-        blob: await imageResponse.blob(),
-        filename: payload?.filename || headerFilename || null,
-      };
-    }
+    if (error) throw new Error(error.message || 'Download failed.');
+    if (!(data instanceof Blob)) throw new Error('Download failed.');
 
-    return { blob, filename: headerFilename };
+    return { blob: data, filename: null };
   },
 };
