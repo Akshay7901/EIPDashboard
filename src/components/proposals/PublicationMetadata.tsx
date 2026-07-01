@@ -417,6 +417,8 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
   };
 
   const handleSaveDraft = async () => {
+    if (!validateBookDescriptionLength(bookDesc)) return;
+
     setSaving(true);
     try {
       await metadataApi.update(ticketNumber, {
@@ -463,6 +465,8 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
   };
 
   const handleSubmitToAuthor = async () => {
+    if (!validateBookDescriptionLength(bookDesc)) return;
+
     setSubmitting(true);
     try {
       await metadataApi.update(ticketNumber, { ...buildPayload(), notes: "Submitted to author for finalization" });
@@ -477,6 +481,8 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
   };
 
   const handleRespondAndSubmit = async () => {
+    if (!validateBookDescriptionLength(bookDesc)) return;
+
     setSubmitting(true);
     try {
       // 1. Respond to all pending queries
@@ -650,7 +656,17 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
         {/* Book Information */}
         <SectionHeader title="Book Information" />
 
-        <EditableRow label="Book description" sublabel="(max 2000 characters)" value={bookDesc} onChange={setBookDesc} type="textarea" disabled={isFormDisabled} authorChange={authorChanges["book_description"] || null} />
+        <EditableRow
+          label="Book description"
+          sublabel="(max 2000 characters)"
+          value={bookDesc}
+          onChange={setBookDesc}
+          type="textarea"
+          disabled={isFormDisabled}
+          authorChange={authorChanges["book_description"] || null}
+          maxLength={BOOK_DESCRIPTION_MAX_CHARS}
+          showCharacterCount
+        />
         <EditableRow label="Keywords/Tags" value={keywords} onChange={setKeywords} type="textarea" disabled={isFormDisabled} authorChange={authorChanges["keywords"] || null} />
 
         {/* Cover Image Section */}
