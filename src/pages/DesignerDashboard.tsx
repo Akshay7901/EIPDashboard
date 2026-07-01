@@ -123,6 +123,7 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
   const [authorCoverUrl, setAuthorCoverUrl] = useState<string | null>(null);
   const [authorCoverLoading, setAuthorCoverLoading] = useState(false);
   const [authorCoverError, setAuthorCoverError] = useState<string | null>(null);
+  const [downloadingCover, setDownloadingCover] = useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
