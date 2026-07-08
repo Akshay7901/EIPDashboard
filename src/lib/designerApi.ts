@@ -101,6 +101,17 @@ export const designerApi = {
     return data;
   },
 
+  uploadCoverSingle: async (ticket: string, file: File): Promise<any> => {
+    const form = new FormData();
+    form.append('file', file);
+    const { data } = await api.post(
+      `/api/proposals/designer/proposals/${encodeURIComponent(ticket)}/cover`,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    return data;
+  },
+
   getCoverUrl: async (ticket: string, binding: CoverBinding): Promise<string> => {
     const { data } = await api.get(
       `/api/proposals/designer/proposals/${encodeURIComponent(ticket)}/cover/${binding}`
