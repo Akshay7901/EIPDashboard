@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Upload, CheckCircle2, ImageIcon, LogOut, ExternalLink, Download } from 'lucide-react';
+import { Loader2, Upload, CheckCircle2, LogOut, Download } from 'lucide-react';
 import brandLogo from '@/assets/brand-logo.webp';
 
 const BINDING_LABELS: Record<CoverBinding, string> = {
@@ -16,6 +16,14 @@ const BINDING_LABELS: Record<CoverBinding, string> = {
   ebook: 'eBook',
 };
 const BINDINGS: CoverBinding[] = ['hb', 'pb', 'ebook'];
+
+const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/tiff'];
+const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'tif', 'tiff'];
+const isAllowedImage = (file: File) => {
+  if (ALLOWED_MIME.includes(file.type)) return true;
+  const ext = file.name.split('.').pop()?.toLowerCase();
+  return !!ext && ALLOWED_EXT.includes(ext);
+};
 
 const formatDate = (iso?: string | null) => {
   if (!iso) return '';
@@ -26,100 +34,10 @@ const formatDate = (iso?: string | null) => {
   }
 };
 
-const CoverSlot: React.FC<{
-  ticket: string;
-  binding: CoverBinding;
-  cover?: DesignerProposal['covers'] extends infer T ? any : any;
-  onUpload: (binding: CoverBinding, file: File) => Promise<void>;
-  busyBinding: CoverBinding | null;
-}> = ({ ticket, binding, cover, onUpload, busyBinding }) => {
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const [opening, setOpening] = useState(false);
-  const isUploaded = !!cover?.uploaded;
-  const isBusy = busyBinding === binding;
-
-  const handleOpen = async () => {
-    if (!isUploaded || opening) return;
-    setOpening(true);
-    try {
-      const url = await designerApi.getCoverUrl(ticket, binding);
-      if (url) {
-        window.open(url, '_blank', 'noopener,noreferrer');
-      } else {
-        toast({ variant: 'destructive', title: 'Could not open cover', description: 'No URL returned.' });
-      }
-    } catch (e: any) {
-      toast({ variant: 'destructive', title: 'Could not open cover', description: e?.message || 'Try again.' });
-    } finally {
-      setOpening(false);
-    }
-  };
-
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    e.target.value = '';
-    if (f) onUpload(binding, f);
-  };
-
-  return (
-    <div className="rounded-lg border border-border bg-white p-4 flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ImageIcon className="h-4 w-4 text-[#3d5a47]" />
-          <span className="font-medium text-sm text-foreground">{BINDING_LABELS[binding]}</span>
-        </div>
-        {isUploaded ? (
-          <Badge className="bg-[#3d5a47] hover:bg-[#3d5a47] text-white">Uploaded</Badge>
-        ) : (
-          <Badge variant="outline" className="text-muted-foreground">Pending</Badge>
-        )}
-      </div>
-
-      {isUploaded ? (
-        <button
-          onClick={handleOpen}
-          className="text-left text-xs text-muted-foreground hover:text-[#3d5a47] transition-colors flex items-start gap-1 group"
-          disabled={opening}
-        >
-          <ExternalLink className="h-3 w-3 mt-0.5 shrink-0" />
-          <span className="break-all">
-            <span className="font-medium text-foreground group-hover:text-[#3d5a47]">
-              {cover?.filename || 'View cover'}
-            </span>
-            {cover?.uploaded_at && <span className="block">Uploaded {formatDate(cover.uploaded_at)}</span>}
-          </span>
-        </button>
-      ) : (
-        <p className="text-xs text-muted-foreground">No file uploaded yet.</p>
-      )}
-
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*,.pdf"
-        className="hidden"
-        onChange={handleFile}
-      />
-      <Button
-        size="sm"
-        variant="outline"
-        className="mt-auto border-[#3d5a47] text-[#3d5a47] hover:bg-[#3d5a47] hover:text-white"
-        onClick={() => inputRef.current?.click()}
-        disabled={isBusy}
-      >
-        {isBusy ? (
-          <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading…</>
-        ) : (
-          <><Upload className="h-4 w-4 mr-2" /> {isUploaded ? 'Replace' : 'Upload'}</>
-        )}
-      </Button>
-    </div>
-  );
-};
-
 const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) => {
   const qc = useQueryClient();
-  const [busyBinding, setBusyBinding] = useState<CoverBinding | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const [authorCoverUrl, setAuthorCoverUrl] = useState<string | null>(null);
   const [authorCoverLoading, setAuthorCoverLoading] = useState(false);
   const [authorCoverError, setAuthorCoverError] = useState<string | null>(null);
@@ -152,12 +70,27 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
   }, [proposal.ticket_number, proposal.author_cover?.filename]);
 
   const allUploaded = BINDINGS.every((b) => proposal.covers?.[b]?.uploaded);
+  const latestUploadedAt = useMemo(() => {
+    const dates = BINDINGS
+      .map((b) => proposal.covers?.[b]?.uploaded_at)
+      .filter(Boolean) as string[];
+    if (!dates.length) return null;
+    return dates.sort().slice(-1)[0];
+  }, [proposal.covers]);
 
-  const handleUpload = async (binding: CoverBinding, file: File) => {
-    setBusyBinding(binding);
+  const handleUpload = async (file: File) => {
+    if (!isAllowedImage(file)) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid file type',
+        description: 'Only image files are allowed (JPEG, PNG, GIF, WEBP, TIFF)',
+      });
+      return;
+    }
+    setUploading(true);
     try {
-      await designerApi.uploadCover(proposal.ticket_number, binding, file);
-      toast({ title: 'Cover uploaded', description: `${BINDING_LABELS[binding]} cover saved.` });
+      await designerApi.uploadCoverSingle(proposal.ticket_number, file);
+      toast({ title: 'Cover uploaded', description: 'All bindings updated.' });
       qc.invalidateQueries({ queryKey: ['designer-proposals'] });
     } catch (e: any) {
       toast({
@@ -166,8 +99,14 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
         description: e?.message || 'Please try again.',
       });
     } finally {
-      setBusyBinding(null);
+      setUploading(false);
     }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = '';
+    if (f) handleUpload(f);
   };
 
   const handleDownloadAuthorCover = async () => {
@@ -222,17 +161,45 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {BINDINGS.map((b) => (
-          <CoverSlot
-            key={b}
-            ticket={proposal.ticket_number}
-            binding={b}
-            cover={proposal.covers?.[b]}
-            onUpload={handleUpload}
-            busyBinding={busyBinding}
-          />
-        ))}
+      <div className="rounded-lg border border-border bg-white p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="text-sm">
+          {allUploaded ? (
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 text-emerald-700 font-medium">
+                <CheckCircle2 className="h-4 w-4" /> Complete
+              </div>
+              {latestUploadedAt && (
+                <div className="text-xs text-muted-foreground">
+                  Uploaded {formatDate(latestUploadedAt)}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-muted-foreground">
+              No cover uploaded yet. One image covers HB, PB and eBook.
+            </div>
+          )}
+        </div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/gif,image/webp,image/tiff"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-[#3d5a47] text-[#3d5a47] hover:bg-[#3d5a47] hover:text-white"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+        >
+          {uploading ? (
+            <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading…</>
+          ) : (
+            <><Upload className="h-4 w-4 mr-2" /> {allUploaded ? 'Replace Cover' : 'Upload Cover'}</>
+          )}
+        </Button>
       </div>
 
       {proposal.author_cover && (
