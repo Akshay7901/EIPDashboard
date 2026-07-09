@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Check, CheckCircle2, Plus, Trash2, Loader2, MessageSquare, ImageIcon, Clock } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { extractCountry } from "@/lib/extractCountry";
 import { Badge } from "@/components/ui/badge";
@@ -143,6 +153,8 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
   const metadataStatus = metadataResponse?.metadata_status;
   const isSentToAuthor = metadataStatus === "sent_to_author";
   const isLocked = statusIs(proposal.status || "", "locked") || metadataStatus === "locked";
+  const [confirmDeleteCoverOpen, setConfirmDeleteCoverOpen] = useState(false);
+  const [deletingCover, setDeletingCover] = useState(false);
   const isApproved =
     metadataStatus === "approved" ||
     statusIs(proposal.status || "", "author_approved", "approved");
@@ -651,7 +663,7 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
               <div className="relative w-32 h-44 rounded-md overflow-hidden border-2 border-border">
                 <img src={metadataResponse.cover_image.s3_url} alt="Cover" className="w-full h-full object-cover" />
               </div>
-              <div className="space-y-1 text-sm text-muted-foreground">
+              <div className="space-y-1 text-sm text-muted-foreground flex-1">
                 <p><span className="font-medium text-foreground">File:</span> {metadataResponse.cover_image.filename}</p>
                 <p><span className="font-medium text-foreground">Dimensions:</span> {metadataResponse.cover_image.width_px} × {metadataResponse.cover_image.height_px}px</p>
                 <p><span className="font-medium text-foreground">DPI:</span> {metadataResponse.cover_image.dpi}</p>
@@ -659,6 +671,24 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
                 <p><span className="font-medium text-foreground">Uploaded:</span> {new Date(metadataResponse.cover_image.uploaded_at).toLocaleDateString()}</p>
                 {metadataResponse.cover_image.source && (
                   <p><span className="font-medium text-foreground">Image Source / Credit:</span> {metadataResponse.cover_image.source}</p>
+                )}
+                {!isLocked && (
+                  <div className="pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-destructive hover:text-destructive"
+                      disabled={deletingCover}
+                      onClick={() => setConfirmDeleteCoverOpen(true)}
+                    >
+                      {deletingCover ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
+                      Remove
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
@@ -671,6 +701,44 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
         </div>
 
       </div>
+
+      <AlertDialog open={confirmDeleteCoverOpen} onOpenChange={setConfirmDeleteCoverOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove cover image?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this cover image? This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingCover}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deletingCover}
+              onClick={async (e) => {
+                e.preventDefault();
+                try {
+                  setDeletingCover(true);
+                  await metadataApi.deleteCoverImage(ticketNumber);
+                  await queryClient.invalidateQueries({ queryKey: ["metadata", ticketNumber] });
+                  toast({ title: "Cover image removed" });
+                  setConfirmDeleteCoverOpen(false);
+                } catch (err: any) {
+                  const msg =
+                    err?.response?.data?.message ||
+                    err?.response?.data?.error ||
+                    err?.message ||
+                    "Failed to remove cover image";
+                  toast({ title: "Error", description: msg, variant: "destructive" });
+                } finally {
+                  setDeletingCover(false);
+                }
+              }}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
 
       {/* Action buttons - show when form is editable */}
