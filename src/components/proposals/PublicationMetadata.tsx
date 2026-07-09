@@ -153,6 +153,8 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
   const metadataStatus = metadataResponse?.metadata_status;
   const isSentToAuthor = metadataStatus === "sent_to_author";
   const isLocked = statusIs(proposal.status || "", "locked") || metadataStatus === "locked";
+  const [confirmDeleteCoverOpen, setConfirmDeleteCoverOpen] = useState(false);
+  const [deletingCover, setDeletingCover] = useState(false);
   const isApproved =
     metadataStatus === "approved" ||
     statusIs(proposal.status || "", "author_approved", "approved");
