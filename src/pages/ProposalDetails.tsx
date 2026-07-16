@@ -49,6 +49,7 @@ import { useContract } from "@/hooks/useContract";
 import { useRequestInfo } from "@/hooks/useRequestInfo";
 import InfoRequestPanel from "@/components/proposals/InfoRequestPanel";
 import AiAssistanceSplitView from "@/components/proposals/AiAssistanceSplitView";
+import AiReviewPanel from "@/components/proposals/AiReviewPanel";
 
 /* ---------------- Helpers ---------------- */
 
@@ -875,6 +876,11 @@ const ProposalDetails: React.FC = () => {
 
           {/* ---- SUPPORTING DOCUMENTS (Decision Reviewer) ---- */}
           <TabsContent value="documents" className="mt-4">
+            {isAdmin && ticketNum && (
+              <div className="mb-4">
+                <AiReviewPanel ticketNumber={ticketNum} />
+              </div>
+            )}
             <Card>
               <CardHeader>
                 <CardTitle>Supporting Documents</CardTitle>
