@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Loader2, Users, ArrowUpDown, Trash2 } from "lucide-react";
+import { Search, Loader2, Users, ArrowUpDown, Trash2, Sparkles } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   AlertDialog,
@@ -482,6 +482,11 @@ const Proposals: React.FC = () => {
                         Status
                       </TableHead>
                       {isAdmin && (
+                        <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide text-center w-[8%]">
+                          AI Score
+                        </TableHead>
+                      )}
+                      {isAdmin && (
                         <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide text-right w-[6%]">
                           Actions
                         </TableHead>
@@ -547,6 +552,25 @@ const Proposals: React.FC = () => {
                             </div>
                           </TooltipProvider>
                         </TableCell>
+                        {isAdmin && (
+                          <TableCell className="text-center">
+                            {typeof proposal.ai_review_score === 'number' ? (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="inline-flex items-center gap-1 text-sm font-medium text-foreground">
+                                      <Sparkles className="h-3.5 w-3.5 text-primary" />
+                                      {proposal.ai_review_score.toFixed(1)}
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent><p>AI review score</p></TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                        )}
                         {isAdmin && (
                           <TableCell
                             className="text-right"

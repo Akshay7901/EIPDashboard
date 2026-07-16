@@ -193,6 +193,8 @@ export interface Proposal {
   action_required?: boolean;
   // Publication metadata status from API (e.g. "draft", "sent_to_author", "approved")
   metadata_status?: string | null;
+  // AI review score from API (e.g. 7.4)
+  ai_review_score?: number | null;
   // Legacy compatibility
   client?: string;
   clientEmail?: string;
