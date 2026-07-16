@@ -65,6 +65,7 @@ const mapApiProposal = (apiProposal: any): Proposal => {
     assigned_reviewers: normalizeAssignments(apiProposal.assigned_reviewers || apiProposal.assignments),
     action_required: apiProposal.action_required ?? false,
     metadata_status: apiProposal.metadata_status ?? apiProposal.current_data?.metadata_status ?? null,
+    ai_review_score: apiProposal.ai_review_score ?? apiProposal.ai_review?.final_score ?? null,
   };
 };
 
