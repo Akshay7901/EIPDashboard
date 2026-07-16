@@ -482,6 +482,11 @@ const Proposals: React.FC = () => {
                         Status
                       </TableHead>
                       {isAdmin && (
+                        <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide text-center w-[8%]">
+                          AI Score
+                        </TableHead>
+                      )}
+                      {isAdmin && (
                         <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide text-right w-[6%]">
                           Actions
                         </TableHead>
