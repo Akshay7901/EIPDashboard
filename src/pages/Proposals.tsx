@@ -553,6 +553,25 @@ const Proposals: React.FC = () => {
                           </TooltipProvider>
                         </TableCell>
                         {isAdmin && (
+                          <TableCell className="text-center">
+                            {typeof proposal.ai_review_score === 'number' ? (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="inline-flex items-center gap-1 text-sm font-medium text-foreground">
+                                      <Sparkles className="h-3.5 w-3.5 text-primary" />
+                                      {proposal.ai_review_score.toFixed(1)}
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent><p>AI review score</p></TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                        )}
+                        {isAdmin && (
                           <TableCell
                             className="text-right"
                             onClick={(e) => e.stopPropagation()}
