@@ -643,7 +643,7 @@ const ProposalDetails: React.FC = () => {
       {/* ============ TABS — ROLE-SPECIFIC ============ */}
       {isReviewer1 ? (/* ---------- DECISION REVIEWER TABS ---------- */
     <Tabs value={drActiveTab} onValueChange={(v) => {setDrActiveTab(v);setDrFeedbackAccordion(undefined);}}>
-          <TabsList className={`grid w-full`} style={{ gridTemplateColumns: `repeat(${4 + (isContractSigned ? 1 : 0) + (drShouldShowFeedback ? 1 : 0)}, minmax(0, 1fr))` }}>
+          <TabsList className={`grid w-full`} style={{ gridTemplateColumns: `repeat(${4 + (isAdmin ? 1 : 0) + (isContractSigned ? 1 : 0) + (drShouldShowFeedback ? 1 : 0)}, minmax(0, 1fr))` }}>
             <TabsTrigger value="book" className="relative gap-1.5 text-xs sm:text-sm">
               <BookOpen className="h-4 w-4" />
               <span className="hidden sm:inline">Book info</span>
@@ -661,6 +661,12 @@ const ProposalDetails: React.FC = () => {
               <Sparkles className="h-4 w-4" />
               <span className="hidden sm:inline">AI Assistance</span>
             </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="ai-review" className="gap-1.5 text-xs sm:text-sm">
+                <Sparkles className="h-4 w-4" />
+                <span className="hidden sm:inline">AI Review</span>
+              </TabsTrigger>
+            )}
             {drShouldShowFeedback &&
         <TabsTrigger value="feedback" className="relative gap-1.5 text-xs sm:text-sm">
                 <FileCheck className="h-4 w-4" />
@@ -876,11 +882,6 @@ const ProposalDetails: React.FC = () => {
 
           {/* ---- SUPPORTING DOCUMENTS (Decision Reviewer) ---- */}
           <TabsContent value="documents" className="mt-4">
-            {isAdmin && ticketNum && (
-              <div className="mb-4">
-                <AiReviewPanel ticketNumber={ticketNum} />
-              </div>
-            )}
             <Card>
               <CardHeader>
                 <CardTitle>Supporting Documents</CardTitle>
@@ -954,6 +955,13 @@ const ProposalDetails: React.FC = () => {
           <TabsContent value="ai-assistance" className="mt-4">
             <AiAssistanceSplitView proposal={proposal} ticketNumber={ticketNum} />
           </TabsContent>
+
+          {/* ---- AI REVIEW (Admin only) ---- */}
+          {isAdmin && ticketNum && (
+            <TabsContent value="ai-review" className="mt-4">
+              <AiReviewPanel ticketNumber={ticketNum} />
+            </TabsContent>
+          )}
 
 
 
