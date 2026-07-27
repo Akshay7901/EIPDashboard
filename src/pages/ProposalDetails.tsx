@@ -33,7 +33,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, FileText, Download, Eye, BookOpen, User, Folder, UserCircle, ClipboardList, MessageSquare, CheckCircle2, FileCheck, Send, Loader2, History, GitCompareArrows, Lock, StickyNote, Save, Info, Sparkles } from "lucide-react";
+import { ArrowLeft, FileText, Download, Eye, BookOpen, User, Folder, UserCircle, ClipboardList, MessageSquare, CheckCircle2, FileCheck, Send, Loader2, History, GitCompareArrows, Lock, StickyNote, Save, Info, Sparkles, Link2 } from "lucide-react";
 import { useProposal, useWorkflowLogs, useProposalEvents } from "@/hooks/useProposals";
 import { useReview } from "@/hooks/useReview";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -1263,12 +1263,12 @@ const ProposalDetails: React.FC = () => {
                                     const res = await proposalApi.getSigningLink(proposal.ticket_number || id || '');
                                     if (res?.signing_link) {
                                       await navigator.clipboard.writeText(res.signing_link);
-                                      toast.success("Link copied — valid for 7 days. Share this directly with the author.");
+                                      toast({ title: "Link copied", description: "Valid for 7 days. Share this directly with the author." });
                                     } else {
-                                      toast.error("No signing link returned");
+                                      toast({ title: "No signing link returned", variant: "destructive" });
                                     }
                                   } catch (e: any) {
-                                    toast.error(e?.message || "Failed to generate signing link");
+                                    toast({ title: "Failed to generate signing link", description: e?.message, variant: "destructive" });
                                   }
                                 }}
                               >
