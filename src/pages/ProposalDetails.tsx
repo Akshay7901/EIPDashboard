@@ -1251,6 +1251,30 @@ const ProposalDetails: React.FC = () => {
                         
                               <Eye className="h-4 w-4" /> View Contract Document
                             </Button>
+                            {(isReviewer1 || isAdmin) && (
+                              (latestContract.status === 'sent' || latestContract.docusign_status === 'sent') &&
+                              latestContract.status !== 'completed' && latestContract.status !== 'voided'
+                            ) && (
+                              <Button
+                                variant="outline"
+                                className="gap-2"
+                                onClick={async () => {
+                                  try {
+                                    const res = await proposalApi.getSigningLink(proposal.ticket_number || id || '');
+                                    if (res?.signing_link) {
+                                      await navigator.clipboard.writeText(res.signing_link);
+                                      toast.success("Link copied — valid for 7 days. Share this directly with the author.");
+                                    } else {
+                                      toast.error("No signing link returned");
+                                    }
+                                  } catch (e: any) {
+                                    toast.error(e?.message || "Failed to generate signing link");
+                                  }
+                                }}
+                              >
+                                <Link2 className="h-4 w-4" /> Copy signing link
+                              </Button>
+                            )}
                             {(isReviewer1 || isAdmin) && latestContract.status === 'voided' && (
                               <Button
                                 className="bg-[#2f4b40] hover:bg-[#2f4b40] hover:opacity-90 text-white gap-2"
