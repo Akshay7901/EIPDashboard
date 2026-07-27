@@ -636,8 +636,8 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
         <SectionHeader title="Cover Image" />
 
         <div className="p-4 space-y-4 border-b border-border">
-          {/* If cover image is already saved to API, show read-only view */}
-          {coverImageData?.s3_url && !coverImageFile ? (
+          {/* If cover image is already saved to API AND proposal is locked, show read-only view */}
+          {coverImageData?.s3_url && !coverImageFile && isLocked ? (
             <div className="space-y-3">
               <div className="flex items-start gap-4">
                 <div className="relative w-32 h-44 rounded-md overflow-hidden border-2 border-border">
@@ -664,6 +664,9 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
                   )}
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground italic">
+                Cover image cannot be changed once the proposal is locked.
+              </p>
             </div>
           ) : (
             <>
