@@ -738,7 +738,7 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
                   {coverImagePreview ? (
                     <div className={`relative w-32 h-44 rounded-md overflow-hidden border-2 ${coverImageValidation && !coverImageValidation.isValid ? 'border-destructive' : 'border-border'}`}>
                       <img src={coverImagePreview} alt="Cover preview" className="w-full h-full object-cover" />
-                      {!isApproved && !readOnly && (
+                      {!isLocked && !readOnly && (
                         <button
                           onClick={() => {
                             setCoverImageFile(null);
@@ -759,7 +759,7 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
                       <span className="text-[10px] text-muted-foreground mt-1">No image</span>
                     </div>
                   )}
-                  {!isApproved && !readOnly && (
+                  {!isLocked && !readOnly && (
                     <div className="flex-1 space-y-3">
                       <div>
                         <Label htmlFor="cover-upload" className="cursor-pointer">
