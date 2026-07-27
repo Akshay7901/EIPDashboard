@@ -19,6 +19,7 @@ import AuthorProposalDetails from "./pages/AuthorProposalDetails";
 import DesignerDashboard from "./pages/DesignerDashboard";
 import ContractSigning from "./pages/ContractSigning";
 import ContractComplete from "./pages/ContractComplete";
+import SigningComplete from "./pages/SigningComplete";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -111,6 +112,7 @@ const App = () => (
               }
             />
             <Route path="/contract/complete" element={<ContractComplete />} />
+            <Route path="/signing-complete" element={<SigningComplete />} />
 
             {/* Redirect root to proposals */}
             <Route path="/" element={<Navigate to="/proposals" replace />} />

@@ -33,7 +33,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, FileText, Download, Eye, BookOpen, User, Folder, UserCircle, ClipboardList, MessageSquare, CheckCircle2, FileCheck, Send, Loader2, History, GitCompareArrows, Lock, StickyNote, Save, Info, Sparkles } from "lucide-react";
+import { ArrowLeft, FileText, Download, Eye, BookOpen, User, Folder, UserCircle, ClipboardList, MessageSquare, CheckCircle2, FileCheck, Send, Loader2, History, GitCompareArrows, Lock, StickyNote, Save, Info, Sparkles, Link2 } from "lucide-react";
 import { useProposal, useWorkflowLogs, useProposalEvents } from "@/hooks/useProposals";
 import { useReview } from "@/hooks/useReview";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -1251,6 +1251,30 @@ const ProposalDetails: React.FC = () => {
                         
                               <Eye className="h-4 w-4" /> View Contract Document
                             </Button>
+                            {(isReviewer1 || isAdmin) && (
+                              (latestContract.status === 'sent' || latestContract.docusign_status === 'sent') &&
+                              latestContract.status !== 'completed' && latestContract.status !== 'voided'
+                            ) && (
+                              <Button
+                                variant="outline"
+                                className="gap-2"
+                                onClick={async () => {
+                                  try {
+                                    const res = await proposalApi.getSigningLink(proposal.ticket_number || id || '');
+                                    if (res?.signing_link) {
+                                      await navigator.clipboard.writeText(res.signing_link);
+                                      toast({ title: "Link copied", description: "Valid for 7 days. Share this directly with the author." });
+                                    } else {
+                                      toast({ title: "No signing link returned", variant: "destructive" });
+                                    }
+                                  } catch (e: any) {
+                                    toast({ title: "Failed to generate signing link", description: e?.message, variant: "destructive" });
+                                  }
+                                }}
+                              >
+                                <Link2 className="h-4 w-4" /> Copy signing link
+                              </Button>
+                            )}
                             {(isReviewer1 || isAdmin) && latestContract.status === 'voided' && (
                               <Button
                                 className="bg-[#2f4b40] hover:bg-[#2f4b40] hover:opacity-90 text-white gap-2"
