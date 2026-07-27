@@ -191,6 +191,11 @@ export const proposalApi = {
     const { data } = await api.post(`/api/proposals/${encodeURIComponent(ticketNumber)}/contract/questions`, { message });
     return data;
   },
+
+  getSigningLink: async (ticketNumber: string): Promise<{ signing_link: string; expires_at?: string; note?: string }> => {
+    const { data } = await api.post(`/api/proposals/${encodeURIComponent(ticketNumber)}/contract/signing-link`);
+    return data;
+  },
 };
 
 // Metadata API
