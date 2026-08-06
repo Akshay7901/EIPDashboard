@@ -144,28 +144,30 @@ export const designerApi = {
     const token = localStorage.getItem('auth_token');
     if (!token) throw new Error('Please sign in again.');
 
-    const response = await fetch(`${FUNCTIONS_URL}/download-author-cover?ticket=${encodeURIComponent(ticket)}`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        apikey: FUNCTIONS_KEY,
-      },
-    });
-
-    if (!response.ok) {
-      let message = 'Download failed.';
-      try {
-        const payload = await response.json();
-        message = payload?.error || message;
-      } catch {
-        // Keep default message when the response is not JSON.
+    // Primary path: edge-function proxy (avoids S3 CORS issues).
+    try {
+      const response = await fetch(
+        `${FUNCTIONS_URL}/download-author-cover?ticket=${encodeURIComponent(ticket)}`,
+        { method: 'GET', headers: { Authorization: `Bearer ${token}`, apikey: FUNCTIONS_KEY } }
+      );
+      if (response.ok) {
+        return {
+          blob: await response.blob(),
+          filename: filenameFromContentDisposition(response.headers.get('content-disposition')),
+        };
       }
-      throw new Error(message);
+    } catch {
+      // Proxy unreachable (backend asleep/paused) — fall through to direct download.
     }
 
+    // Fallback: fetch the signed URL straight from the EthicsPress API.
+    const { url, filename } = await designerApi.getAuthorCoverDownloadUrl(ticket);
+    if (!url) throw new Error('No image URL available for download.');
+    const direct = await fetch(url);
+    if (!direct.ok) throw new Error('Download failed.');
     return {
-      blob: await response.blob(),
-      filename: filenameFromContentDisposition(response.headers.get('content-disposition')),
+      blob: await direct.blob(),
+      filename: filenameFromContentDisposition(direct.headers.get('content-disposition')) || filename || null,
     };
   },
 };

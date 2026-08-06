@@ -125,11 +125,20 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
       document.body.removeChild(a);
       window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
     } catch (e: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Download failed',
-        description: e?.message || 'The image server blocked browser download. Please try again.',
-      });
+      // Last resort: open the signed URL so the user can still save the file.
+      if (authorCoverUrl) {
+        window.open(authorCoverUrl, '_blank', 'noopener,noreferrer');
+        toast({
+          title: 'Opened in a new tab',
+          description: 'Direct download was blocked — right-click the image to save it.',
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Download failed',
+          description: e?.message || 'Please try again.',
+        });
+      }
     } finally {
       setDownloadingCover(false);
     }
