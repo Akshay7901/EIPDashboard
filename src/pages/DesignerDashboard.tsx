@@ -109,35 +109,62 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
     if (f) handleUpload(f);
   };
 
+  // Re-encodes the already-visible image via canvas — no extra network call.
+  const blobFromCanvas = (src: string): Promise<Blob> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('Canvas unavailable'));
+        ctx.drawImage(img, 0, 0);
+        try {
+          canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Encode failed'))), 'image/png');
+        } catch (err) {
+          reject(err as Error);
+        }
+      };
+      img.onerror = () => reject(new Error('Image load blocked'));
+      img.src = src;
+    });
+
+  const saveBlob = (blob: Blob, filename: string) => {
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+  };
+
   const handleDownloadAuthorCover = async () => {
     if (!authorCoverUrl || downloadingCover) return;
     setDownloadingCover(true);
+    const fallbackName = proposal.author_cover?.filename || 'author-reference';
     try {
       const { blob, filename: downloadedFilename } = await designerApi.downloadAuthorCover(proposal.ticket_number);
-      const filename = downloadedFilename || proposal.author_cover?.filename || 'author-reference';
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      saveBlob(blob, downloadedFilename || fallbackName);
     } catch (e: any) {
-      // Last resort: open the signed URL so the user can still save the file.
-      if (authorCoverUrl) {
-        window.open(authorCoverUrl, '_blank', 'noopener,noreferrer');
-        toast({
-          title: 'Opened in a new tab',
-          description: 'Direct download was blocked — right-click the image to save it.',
-        });
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Download failed',
-          description: e?.message || 'Please try again.',
-        });
+      try {
+        // Fallback 1: re-encode the visible image locally.
+        const blob = await blobFromCanvas(authorCoverUrl);
+        saveBlob(blob, fallbackName.replace(/\.[^.]+$/, '') + '.png');
+      } catch {
+        // Fallback 2: hand the signed URL to the browser's own downloader.
+        const a = document.createElement('a');
+        a.href = authorCoverUrl;
+        a.download = fallbackName;
+        a.rel = 'noopener';
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       }
     } finally {
       setDownloadingCover(false);
