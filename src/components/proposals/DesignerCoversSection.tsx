@@ -28,8 +28,8 @@ const BINDING_LABELS: Record<DesignerCoverBinding, string> = {
   ebook: "eBook",
 };
 
-const ALLOWED_MIME = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/tiff"];
-const ALLOWED_EXT = ["jpg", "jpeg", "png", "gif", "webp", "tif", "tiff"];
+const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp", "image/tiff"];
+const ALLOWED_EXT = ["jpg", "jpeg", "png", "webp", "tif", "tiff"];
 const isAllowedImage = (file: File) => {
   if (ALLOWED_MIME.includes(file.type)) return true;
   const ext = file.name.split(".").pop()?.toLowerCase();
