@@ -20,6 +20,7 @@ import { toast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { metadataApi, metadataQueriesApi, type ProposalMetadata, type MetadataAuthor, type MetadataQuery } from "@/lib/proposalsApi";
 import MetadataQueryDiffPanel from "@/components/proposals/MetadataQueryDiffPanel";
+import DesignerCoversSection from "@/components/proposals/DesignerCoversSection";
 import type { Proposal } from "@/types";
 import { statusIs } from "@/lib/statusUtils";
 
@@ -699,6 +700,9 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
             </div>
           )}
         </div>
+
+        {/* Designer Covers Section */}
+        <DesignerCoversSection ticketNumber={ticketNumber} metadata={metadataResponse} />
 
       </div>
 
