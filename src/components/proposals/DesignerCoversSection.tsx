@@ -28,8 +28,8 @@ const BINDING_LABELS: Record<DesignerCoverBinding, string> = {
   ebook: "eBook",
 };
 
-const ALLOWED_MIME = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/tiff"];
-const ALLOWED_EXT = ["jpg", "jpeg", "png", "gif", "webp", "tif", "tiff"];
+const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp", "image/tiff"];
+const ALLOWED_EXT = ["jpg", "jpeg", "png", "webp", "tif", "tiff"];
 const isAllowedImage = (file: File) => {
   if (ALLOWED_MIME.includes(file.type)) return true;
   const ext = file.name.split(".").pop()?.toLowerCase();
@@ -75,6 +75,8 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
     queryKey: ["metadata", ticketNumber],
     queryFn: () => metadataApi.get(ticketNumber),
     enabled: !metadata && !!ticketNumber,
+    staleTime: 0,
+    refetchInterval: 300000,
   });
 
   const response = metadata ?? fetched;
@@ -108,7 +110,7 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
       toast({
         variant: "destructive",
         title: "Invalid file type",
-        description: "Only image files are allowed (JPEG, PNG, GIF, WEBP, TIFF)",
+        description: "Only image files are allowed (JPEG, PNG, WEBP, TIFF)",
       });
       return;
     }
@@ -142,7 +144,7 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
           <input
             ref={inputRef}
             type="file"
-            accept="image/jpeg,image/png,image/gif,image/webp,image/tiff"
+            accept="image/jpeg,image/png,image/webp,image/tiff"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
@@ -156,7 +158,7 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
           <div className="flex flex-wrap items-center gap-3">
             <span className="flex items-center gap-2 text-sm text-muted-foreground">
               <ImageIcon className="h-4 w-4" />
-              Designer has not uploaded covers yet.
+              You have not uploaded covers yet.
             </span>
             {canManage && (
               <Button size="sm" variant="outline" className="gap-1.5" disabled={uploading} onClick={() => inputRef.current?.click()}>
