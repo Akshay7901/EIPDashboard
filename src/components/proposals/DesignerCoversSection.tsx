@@ -110,7 +110,7 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
       toast({
         variant: "destructive",
         title: "Invalid file type",
-        description: "Only image files are allowed (JPEG, PNG, GIF, WEBP, TIFF)",
+        description: "Only image files are allowed (JPEG, PNG, WEBP, TIFF)",
       });
       return;
     }
