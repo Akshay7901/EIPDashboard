@@ -142,7 +142,7 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
           <input
             ref={inputRef}
             type="file"
-            accept="image/jpeg,image/png,image/gif,image/webp,image/tiff"
+            accept="image/jpeg,image/png,image/webp,image/tiff"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
