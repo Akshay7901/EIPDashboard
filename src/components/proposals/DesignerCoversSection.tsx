@@ -126,11 +126,9 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
     }
   };
 
-  const badge = !hasAny
-    ? { label: "Not Uploaded", className: "bg-amber-100 text-amber-800 border-amber-200" }
-    : present.length === 3
-      ? { label: "All Uploaded", className: "bg-emerald-100 text-emerald-800 border-emerald-200" }
-      : { label: "Pending", className: "bg-amber-100 text-amber-800 border-amber-200" };
+  const badge = present.length === 3
+    ? { label: "All Uploaded", className: "bg-emerald-100 text-emerald-800 border-emerald-200" }
+    : { label: "Pending", className: "bg-amber-100 text-amber-800 border-amber-200" };
 
   return (
     <div className={className}>
