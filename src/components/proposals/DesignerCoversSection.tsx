@@ -156,7 +156,7 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
           <div className="flex flex-wrap items-center gap-3">
             <span className="flex items-center gap-2 text-sm text-muted-foreground">
               <ImageIcon className="h-4 w-4" />
-              Designer has not uploaded covers yet.
+              You have not uploaded covers yet.
             </span>
             {canManage && (
               <Button size="sm" variant="outline" className="gap-1.5" disabled={uploading} onClick={() => inputRef.current?.click()}>
