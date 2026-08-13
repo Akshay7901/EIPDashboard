@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Upload, CheckCircle2, LogOut, Download } from 'lucide-react';
 import brandLogo from '@/assets/brand-logo.webp';
+import DesignerCoversSection from '@/components/proposals/DesignerCoversSection';
 
 const BINDING_LABELS: Record<CoverBinding, string> = {
   hb: 'Hardback',
@@ -236,6 +237,10 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
             <><Upload className="h-4 w-4 mr-2" /> {allUploaded ? 'Replace Cover' : 'Upload Cover'}</>
           )}
         </Button>
+      </div>
+
+      <div className="rounded-lg border border-border bg-white overflow-hidden">
+        <DesignerCoversSection ticketNumber={proposal.ticket_number} canManage />
       </div>
 
       {proposal.author_cover && (
