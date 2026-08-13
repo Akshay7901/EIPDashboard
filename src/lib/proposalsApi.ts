@@ -245,8 +245,48 @@ export interface MetadataResponse {
   updated_at: string;
   approved_at?: string | null;
   cover_image?: CoverImageData | null;
+  designer_covers?: Partial<Record<DesignerCoverBinding, DesignerCoverEntry>> | null;
   revisions?: any[];
 }
+
+export type DesignerCoverBinding = 'hb' | 'pb' | 'ebook';
+
+export interface DesignerCoverEntry {
+  url: string;
+  filename?: string;
+  uploaded_by?: string;
+  uploaded_at?: string;
+}
+
+export const designerCoversApi = {
+  downloadUrl: (ticketNumber: string, binding: DesignerCoverBinding) =>
+    `/api/proposals/${encodeURIComponent(ticketNumber)}/designer-covers/${binding}/download`,
+
+  download: async (ticketNumber: string, binding: DesignerCoverBinding): Promise<{ blob: Blob; filename?: string | null }> => {
+    const response = await api.get(designerCoversApi.downloadUrl(ticketNumber, binding), {
+      responseType: 'blob',
+    });
+    const disposition = (response.headers as any)?.['content-disposition'] as string | undefined;
+    const match = disposition?.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+    return { blob: response.data as Blob, filename: match?.[1] ? decodeURIComponent(match[1]) : null };
+  },
+
+  deleteAll: async (ticketNumber: string): Promise<any> => {
+    const { data } = await api.delete(`/api/proposals/${encodeURIComponent(ticketNumber)}/designer-covers`);
+    return data;
+  },
+
+  upload: async (ticketNumber: string, file: File): Promise<any> => {
+    const form = new FormData();
+    form.append('file', file);
+    const { data } = await api.post(
+      `/api/proposals/designer/proposals/${encodeURIComponent(ticketNumber)}/cover`,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    return data;
+  },
+};
 
 export const metadataApi = {
   get: async (ticketNumber: string): Promise<MetadataResponse | null> => {
