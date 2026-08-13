@@ -75,6 +75,8 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
     queryKey: ["metadata", ticketNumber],
     queryFn: () => metadataApi.get(ticketNumber),
     enabled: !metadata && !!ticketNumber,
+    staleTime: 0,
+    refetchInterval: 300000,
   });
 
   const response = metadata ?? fetched;
