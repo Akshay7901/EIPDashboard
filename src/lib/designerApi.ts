@@ -119,6 +119,21 @@ export const designerApi = {
     return data?.url || data?.presigned_url || data?.signed_url || '';
   },
 
+  getCovers: async (
+    ticket: string
+  ): Promise<{
+    all_uploaded: boolean;
+    covers: Partial<Record<CoverBinding, { url?: string; filename?: string | null; uploaded_at?: string | null }>>;
+  }> => {
+    const { data } = await api.get(
+      `/api/proposals/designer/proposals/${encodeURIComponent(ticket)}/covers`
+    );
+    return {
+      all_uploaded: !!data?.all_uploaded,
+      covers: data?.covers && typeof data.covers === 'object' ? data.covers : {},
+    };
+  },
+
   getAuthorCoverUrl: async (ticket: string): Promise<{ url: string; filename?: string | null }> => {
     const { data } = await api.get(
       `/api/proposals/designer/proposals/${encodeURIComponent(ticket)}/author-cover`
