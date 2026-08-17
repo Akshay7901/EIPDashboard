@@ -7,9 +7,19 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Upload, CheckCircle2, LogOut, Download } from 'lucide-react';
+import { Loader2, Upload, CheckCircle2, LogOut, Download, Trash2 } from 'lucide-react';
 import brandLogo from '@/assets/brand-logo.webp';
-import DesignerCoversSection from '@/components/proposals/DesignerCoversSection';
+import { designerCoversApi } from '@/lib/proposalsApi';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const BINDING_LABELS: Record<CoverBinding, string> = {
   hb: 'Hardback',
@@ -38,6 +48,9 @@ const formatDate = (iso?: string | null) => {
 const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) => {
   const qc = useQueryClient();
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [downloading, setDownloading] = useState<CoverBinding | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [authorCoverUrl, setAuthorCoverUrl] = useState<string | null>(null);
   const [authorCoverLoading, setAuthorCoverLoading] = useState(false);
@@ -70,14 +83,30 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
     };
   }, [proposal.ticket_number, proposal.author_cover?.filename]);
 
-  const allUploaded = BINDINGS.every((b) => proposal.covers?.[b]?.uploaded);
-  const latestUploadedAt = useMemo(() => {
-    const dates = BINDINGS
-      .map((b) => proposal.covers?.[b]?.uploaded_at)
-      .filter(Boolean) as string[];
-    if (!dates.length) return null;
-    return dates.sort().slice(-1)[0];
-  }, [proposal.covers]);
+  const coversQuery = useQuery({
+    queryKey: ['designer-covers', proposal.ticket_number],
+    queryFn: () => designerApi.getCovers(proposal.ticket_number),
+    staleTime: 0,
+    gcTime: 0,
+    refetchInterval: 300000,
+  });
+  const covers = coversQuery.data?.covers || {};
+  const hasCovers = BINDINGS.some((b) => covers?.[b]?.url);
+  const allUploaded = BINDINGS.every((b) => covers?.[b]?.url);
+  const refreshCovers = () =>
+    qc.invalidateQueries({ queryKey: ['designer-covers', proposal.ticket_number] });
+
+  const handleDownloadBinding = async (binding: CoverBinding) => {
+    setDownloading(binding);
+    try {
+      const { blob, filename } = await designerCoversApi.download(proposal.ticket_number, binding as any);
+      saveBlob(blob, filename || covers?.[binding]?.filename || `${proposal.ticket_number}-${binding}.jpg`);
+    } catch {
+      toast({ variant: 'destructive', title: 'Download failed', description: 'Please try again.' });
+    } finally {
+      setDownloading(null);
+    }
+  };
 
   const handleUpload = async (file: File) => {
     if (!isAllowedImage(file)) {
@@ -93,6 +122,7 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
       await designerApi.uploadCoverSingle(proposal.ticket_number, file);
       toast({ title: 'Cover uploaded', description: 'All bindings updated.' });
       qc.invalidateQueries({ queryKey: ['designer-proposals'] });
+      await refreshCovers();
     } catch (e: any) {
       toast({
         variant: 'destructive',
@@ -198,50 +228,142 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
         )}
       </div>
 
-      <div className="rounded-lg border border-border bg-white p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="text-sm">
-          {allUploaded ? (
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-1.5 text-emerald-700 font-medium">
-                <CheckCircle2 className="h-4 w-4" /> Complete
-              </div>
-              {latestUploadedAt && (
-                <div className="text-xs text-muted-foreground">
-                  Uploaded {formatDate(latestUploadedAt)}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-muted-foreground">
-              No cover uploaded yet. One image covers HB, PB and eBook.
-            </div>
-          )}
-        </div>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/gif,image/webp,image/tiff"
-          className="hidden"
-          onChange={handleFileChange}
-        />
-        <Button
-          size="sm"
-          variant="outline"
-          className="border-[#3d5a47] text-[#3d5a47] hover:bg-[#3d5a47] hover:text-white"
-          onClick={() => inputRef.current?.click()}
-          disabled={uploading}
-        >
-          {uploading ? (
-            <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading…</>
-          ) : (
-            <><Upload className="h-4 w-4 mr-2" /> {allUploaded ? 'Replace Cover' : 'Upload Cover'}</>
-          )}
-        </Button>
-      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/tiff"
+        className="hidden"
+        onChange={handleFileChange}
+      />
 
-      <div className="rounded-lg border border-border bg-white overflow-hidden">
-        <DesignerCoversSection ticketNumber={proposal.ticket_number} canManage />
-      </div>
+      {!hasCovers ? (
+        <div className="rounded-lg border border-border bg-white p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="text-sm text-muted-foreground">
+            {coversQuery.isLoading
+              ? 'Loading covers…'
+              : 'No cover uploaded yet. One image covers HB, PB and eBook.'}
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-[#3d5a47] text-[#3d5a47] hover:bg-[#3d5a47] hover:text-white"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+          >
+            {uploading ? (
+              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading…</>
+            ) : (
+              <><Upload className="h-4 w-4 mr-2" /> Upload Cover</>
+            )}
+          </Button>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-border bg-white p-4 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {BINDINGS.map((binding) => {
+              const cover = covers?.[binding];
+              return (
+                <div key={binding} className="rounded-md border border-border p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold text-foreground">{BINDING_LABELS[binding]}</p>
+                    {cover?.url && (
+                      <button
+                        onClick={() => handleDownloadBinding(binding)}
+                        disabled={downloading === binding}
+                        title="Download"
+                        aria-label={`Download ${BINDING_LABELS[binding]} cover`}
+                        className="text-[#3d5a47] hover:opacity-80 disabled:opacity-60"
+                      >
+                        {downloading === binding ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Download className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                  {cover?.url ? (
+                    <a href={cover.url} target="_blank" rel="noopener noreferrer" className="block">
+                      <img
+                        src={cover.url}
+                        alt={`${BINDING_LABELS[binding]} cover`}
+                        className="w-full h-40 object-contain rounded bg-muted"
+                      />
+                    </a>
+                  ) : (
+                    <div className="w-full h-40 rounded bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                      Not available
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {cover?.uploaded_at ? formatDate(cover.uploaded_at) : '—'}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-[#3d5a47] text-[#3d5a47] hover:bg-[#3d5a47] hover:text-white"
+              onClick={() => inputRef.current?.click()}
+              disabled={uploading}
+            >
+              {uploading ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading…</>
+              ) : (
+                <><Upload className="h-4 w-4 mr-2" /> Re-upload</>
+              )}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 text-destructive hover:text-destructive"
+              disabled={deleting}
+              onClick={() => setConfirmDeleteOpen(true)}
+            >
+              {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+              Delete
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete designer covers?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes the Hardback, Paperback and eBook covers. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              onClick={async (e) => {
+                e.preventDefault();
+                setDeleting(true);
+                try {
+                  await designerCoversApi.deleteAll(proposal.ticket_number);
+                  await refreshCovers();
+                  qc.invalidateQueries({ queryKey: ['designer-proposals'] });
+                  toast({ title: 'Designer covers deleted' });
+                  setConfirmDeleteOpen(false);
+                } catch (err: any) {
+                  toast({ variant: 'destructive', title: 'Delete failed', description: err?.message || 'Please try again.' });
+                } finally {
+                  setDeleting(false);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {proposal.author_cover && (
         <div className="rounded-lg border border-border bg-[#faf8f5] p-4 space-y-3">
