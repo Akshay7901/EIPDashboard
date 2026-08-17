@@ -7,9 +7,19 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Upload, CheckCircle2, LogOut, Download } from 'lucide-react';
+import { Loader2, Upload, CheckCircle2, LogOut, Download, Trash2 } from 'lucide-react';
 import brandLogo from '@/assets/brand-logo.webp';
-import DesignerCoversSection from '@/components/proposals/DesignerCoversSection';
+import { designerCoversApi } from '@/lib/proposalsApi';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const BINDING_LABELS: Record<CoverBinding, string> = {
   hb: 'Hardback',
@@ -38,6 +48,9 @@ const formatDate = (iso?: string | null) => {
 const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) => {
   const qc = useQueryClient();
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [downloading, setDownloading] = useState<CoverBinding | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [authorCoverUrl, setAuthorCoverUrl] = useState<string | null>(null);
   const [authorCoverLoading, setAuthorCoverLoading] = useState(false);
@@ -70,14 +83,30 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
     };
   }, [proposal.ticket_number, proposal.author_cover?.filename]);
 
-  const allUploaded = BINDINGS.every((b) => proposal.covers?.[b]?.uploaded);
-  const latestUploadedAt = useMemo(() => {
-    const dates = BINDINGS
-      .map((b) => proposal.covers?.[b]?.uploaded_at)
-      .filter(Boolean) as string[];
-    if (!dates.length) return null;
-    return dates.sort().slice(-1)[0];
-  }, [proposal.covers]);
+  const coversQuery = useQuery({
+    queryKey: ['designer-covers', proposal.ticket_number],
+    queryFn: () => designerApi.getCovers(proposal.ticket_number),
+    staleTime: 0,
+    gcTime: 0,
+    refetchInterval: 300000,
+  });
+  const covers = coversQuery.data?.covers || {};
+  const hasCovers = BINDINGS.some((b) => covers?.[b]?.url);
+  const allUploaded = BINDINGS.every((b) => covers?.[b]?.url);
+  const refreshCovers = () =>
+    qc.invalidateQueries({ queryKey: ['designer-covers', proposal.ticket_number] });
+
+  const handleDownloadBinding = async (binding: CoverBinding) => {
+    setDownloading(binding);
+    try {
+      const { blob, filename } = await designerCoversApi.download(proposal.ticket_number, binding as any);
+      saveBlob(blob, filename || covers?.[binding]?.filename || `${proposal.ticket_number}-${binding}.jpg`);
+    } catch {
+      toast({ variant: 'destructive', title: 'Download failed', description: 'Please try again.' });
+    } finally {
+      setDownloading(null);
+    }
+  };
 
   const handleUpload = async (file: File) => {
     if (!isAllowedImage(file)) {
@@ -93,6 +122,7 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
       await designerApi.uploadCoverSingle(proposal.ticket_number, file);
       toast({ title: 'Cover uploaded', description: 'All bindings updated.' });
       qc.invalidateQueries({ queryKey: ['designer-proposals'] });
+      await refreshCovers();
     } catch (e: any) {
       toast({
         variant: 'destructive',
