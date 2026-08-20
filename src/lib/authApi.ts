@@ -111,4 +111,29 @@ export const authApi = {
     }
     return data;
   },
+
+  requestEmailChange: async (newEmail: string): Promise<{ message?: string }> => {
+    return postAuthWithToken<{ message?: string }>('/auth/change-email', { new_email: newEmail });
+  },
+
+  verifyEmailChange: async (otp: string): Promise<{ message?: string }> => {
+    return postAuthWithToken<{ message?: string }>('/auth/change-email/verify', { otp });
+  },
 };
+
+async function postAuthWithToken<T>(endpoint: string, payload: Record<string, unknown>): Promise<T> {
+  const token = localStorage.getItem('auth_token');
+  const { data } = await axios.post<T>(`${API_BASE_URL}/api/proposals${endpoint}`, payload, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    timeout: 30000,
+  });
+  if ((data as any)?.error) {
+    const err: any = new Error((data as any).error);
+    err.response = { data };
+    throw err;
+  }
+  return data;
+}
