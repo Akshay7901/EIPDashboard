@@ -299,7 +299,19 @@ export const designerCoversApi = {
     );
     return data;
   },
+
+  updateApproval: async (
+    ticketNumber: string,
+    payload: { status: DesignerCoverApprovalStatus; notes?: string }
+  ): Promise<any> => {
+    const { data } = await api.patch(
+      `/api/proposals/${encodeURIComponent(ticketNumber)}/designer-covers/approval`,
+      payload
+    );
+    return data;
+  },
 };
+
 
 export const metadataApi = {
   get: async (ticketNumber: string): Promise<MetadataResponse | null> => {
