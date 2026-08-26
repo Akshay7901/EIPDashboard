@@ -15,11 +15,22 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import {
   designerCoversApi,
   metadataApi,
   type DesignerCoverBinding,
+  type DesignerCoverApprovalStatus,
   type MetadataResponse,
 } from "@/lib/proposalsApi";
+
 
 const BINDINGS: DesignerCoverBinding[] = ["hb", "pb", "ebook"];
 const BINDING_LABELS: Record<DesignerCoverBinding, string> = {
