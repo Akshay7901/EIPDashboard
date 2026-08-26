@@ -276,19 +276,8 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
               ? 'Loading covers…'
               : 'No cover uploaded yet. One image covers HB, PB and eBook.'}
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-[#3d5a47] text-[#3d5a47] hover:bg-[#3d5a47] hover:text-white"
-            onClick={() => inputRef.current?.click()}
-            disabled={uploading}
-          >
-            {uploading ? (
-              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading…</>
-            ) : (
-              <><Upload className="h-4 w-4 mr-2" /> Upload Cover</>
-            )}
-          </Button>
+          {!uploadHidden && uploadButton('Upload Cover')}
+
         </div>
       ) : (
         <div className="rounded-lg border border-border bg-white p-4 space-y-4">
