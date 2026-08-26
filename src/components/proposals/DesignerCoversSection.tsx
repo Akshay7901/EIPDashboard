@@ -141,9 +141,13 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
     }
   };
 
-  const approval = (response as any)?.designer_cover_approval || (response as any)?.approval || null;
+  const coverApproval: CoverApproval | null =
+    (response as any)?.cover_approval ??
+    (response as any)?.designer_cover_approval ??
+    (response as any)?.approval ??
+    null;
   const rawStatus = String(
-    approval?.status ?? (response as any)?.approval_status ?? ''
+    coverApproval?.approval_status ?? coverApproval?.status ?? (response as any)?.approval_status ?? ''
   ).toLowerCase().replace(/\s+/g, '_');
   const approvalStatus: DesignerCoverApprovalStatus =
     rawStatus === 'in_review' || rawStatus === 'query_raised' || rawStatus === 'completed'
