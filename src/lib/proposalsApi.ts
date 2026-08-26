@@ -249,6 +249,7 @@ export interface MetadataResponse {
   designer_cover_approval?: DesignerCoverApproval | null;
   approval?: DesignerCoverApproval | null;
   approval_status?: DesignerCoverApprovalStatus | null;
+  cover_approval?: CoverApproval | null;
   revisions?: any[];
 }
 
@@ -261,6 +262,13 @@ export interface DesignerCoverApproval {
   notes?: string | null;
   reviewed_by?: string | null;
   reviewed_at?: string | null;
+}
+
+export interface CoverApproval {
+  approval_status?: DesignerCoverApprovalStatus | string | null;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  notes?: string | null;
 }
 
 export interface DesignerCoverEntry {

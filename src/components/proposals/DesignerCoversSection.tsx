@@ -26,6 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   designerCoversApi,
   metadataApi,
+  type CoverApproval,
   type DesignerCoverBinding,
   type DesignerCoverApprovalStatus,
   type MetadataResponse,
@@ -140,9 +141,13 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
     }
   };
 
-  const approval = (response as any)?.designer_cover_approval || (response as any)?.approval || null;
+  const coverApproval: CoverApproval | null =
+    (response as any)?.cover_approval ??
+    (response as any)?.designer_cover_approval ??
+    (response as any)?.approval ??
+    null;
   const rawStatus = String(
-    approval?.status ?? (response as any)?.approval_status ?? ''
+    coverApproval?.approval_status ?? (response as any)?.approval_status ?? ''
   ).toLowerCase().replace(/\s+/g, '_');
   const approvalStatus: DesignerCoverApprovalStatus =
     rawStatus === 'in_review' || rawStatus === 'query_raised' || rawStatus === 'completed'
@@ -284,16 +289,16 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
 
         {!canManage && (
           <div className="space-y-3 pt-2 border-t border-border">
-            {approvalStatus === 'query_raised' && approval?.notes && (
+            {approvalStatus === 'query_raised' && coverApproval?.notes && (
               <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                Previous query: {approval.notes}
+                Previous query: {coverApproval.notes}
               </div>
             )}
 
             {approvalStatus === 'completed' ? (
               <p className="text-sm text-muted-foreground">
-                Approved{approval?.reviewed_by ? ` by ${approval.reviewed_by}` : ''}
-                {approval?.reviewed_at ? ` on ${formatDate(approval.reviewed_at)}` : ''}
+                Approved{coverApproval?.reviewed_by ? ` by ${coverApproval.reviewed_by}` : ''}
+                {coverApproval?.reviewed_at ? ` on ${formatDate(coverApproval.reviewed_at)}` : ''}
               </p>
             ) : approvalStatus === 'in_review' ? (
               <div className="flex flex-wrap gap-2">
@@ -311,10 +316,7 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
                 Mark as In Review
               </Button>
             ) : (
-              <div className="flex flex-wrap gap-2" title="Designer has not uploaded covers yet">
-                <Button size="sm" disabled>Approve</Button>
-                <Button size="sm" variant="outline" disabled>Raise Query</Button>
-              </div>
+              <p className="text-sm text-muted-foreground">Waiting for designer to upload covers.</p>
             )}
           </div>
         )}
