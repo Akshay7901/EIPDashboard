@@ -9,6 +9,8 @@ export interface DesignerCoverSlot {
   uploaded_at?: string | null;
 }
 
+export type ApprovalStatus = 'pending' | 'in_review' | 'query_raised' | 'completed';
+
 export interface DesignerProposal {
   ticket_number: string;
   full_title?: string | null;
@@ -16,10 +18,14 @@ export interface DesignerProposal {
   subtitle?: string | null;
   category?: string | null; // 'Authored' | 'Edited'
   display_names?: string[] | string | null;
+  approval_status?: ApprovalStatus;
+  approval?: { status?: string | null; notes?: string | null } | null;
+  all_uploaded?: boolean;
   covers?: Partial<Record<CoverBinding, { uploaded?: boolean; filename?: string | null; uploaded_at?: string | null }>>;
   author_cover?: { filename?: string | null; width_px?: number | null; height_px?: number | null } | null;
   [key: string]: any;
 }
+
 
 const BINDINGS: CoverBinding[] = ['hb', 'pb', 'ebook'];
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
