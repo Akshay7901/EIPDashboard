@@ -26,6 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   designerCoversApi,
   metadataApi,
+  type CoverApproval,
   type DesignerCoverBinding,
   type DesignerCoverApprovalStatus,
   type MetadataResponse,
