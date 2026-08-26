@@ -411,15 +411,34 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
   );
 };
 
+const FILTERS: { label: string; value: 'all' | 'pending' | 'in_review' | 'query_raised' | 'completed' }[] = [
+  { label: 'All', value: 'all' },
+  { label: 'Pending', value: 'pending' },
+  { label: 'In Review', value: 'in_review' },
+  { label: 'Query Raised', value: 'query_raised' },
+  { label: 'Completed', value: 'completed' },
+];
+
 const DesignerDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [filter, setFilter] = useState<'all' | 'pending' | 'in_review' | 'query_raised' | 'completed'>('all');
 
-  const { data: proposals, isLoading, error } = useQuery({
-    queryKey: ['designer-proposals'],
-    queryFn: designerApi.list,
+  const serverStatus = filter === 'all' || filter === 'pending' ? undefined : filter;
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['designer-proposals', serverStatus ?? 'all'],
+    queryFn: () => designerApi.list(serverStatus),
     refetchInterval: 30000,
   });
+
+  const proposals = useMemo(() => {
+    const list = data ?? [];
+    if (filter === 'pending') {
+      return list.filter((p) => (p.approval_status || 'pending') === 'pending' && !p.all_uploaded);
+    }
+    return list;
+  }, [data, filter]);
 
   const handleLogout = async () => {
     await logout();
@@ -454,6 +473,23 @@ const DesignerDashboard: React.FC = () => {
           </p>
         </div>
 
+        <div className="flex flex-wrap items-center gap-2">
+          {FILTERS.map((f) => (
+            <button
+              key={f.value}
+              onClick={() => setFilter(f.value)}
+              className={
+                'rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ' +
+                (filter === f.value
+                  ? 'bg-[#3d5a47] text-white border-[#3d5a47]'
+                  : 'bg-white text-[#3d5a47] border-[#3d5a47]/40 hover:bg-[#3d5a47]/10')
+              }
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-6 w-6 animate-spin text-[#3d5a47]" />
@@ -462,9 +498,9 @@ const DesignerDashboard: React.FC = () => {
           <Card className="p-6 text-sm text-destructive">
             Failed to load proposals. {(error as any)?.message || ''}
           </Card>
-        ) : !proposals || proposals.length === 0 ? (
+        ) : proposals.length === 0 ? (
           <Card className="p-10 text-center text-muted-foreground">
-            No proposals assigned for cover design yet.
+            No proposals found for this filter.
           </Card>
         ) : (
           <div className="space-y-4">
