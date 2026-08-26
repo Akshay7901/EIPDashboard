@@ -126,9 +126,38 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
     }
   };
 
-  const badge = present.length === 3
-    ? { label: "All Uploaded", className: "bg-emerald-100 text-emerald-800 border-emerald-200" }
-    : { label: "Pending", className: "bg-amber-100 text-amber-800 border-amber-200" };
+  const approval = (response as any)?.designer_cover_approval || (response as any)?.approval || null;
+  const rawStatus = String(
+    approval?.status ?? (response as any)?.approval_status ?? ''
+  ).toLowerCase().replace(/\s+/g, '_');
+  const approvalStatus: DesignerCoverApprovalStatus =
+    rawStatus === 'in_review' || rawStatus === 'query_raised' || rawStatus === 'completed'
+      ? (rawStatus as DesignerCoverApprovalStatus)
+      : 'pending';
+
+  const badge =
+    approvalStatus === 'completed'
+      ? { label: 'Approved', className: 'bg-emerald-100 text-emerald-800 border-emerald-200' }
+      : approvalStatus === 'in_review'
+      ? { label: 'In Review', className: 'bg-blue-100 text-blue-800 border-blue-200' }
+      : approvalStatus === 'query_raised'
+      ? { label: 'Query Raised', className: 'bg-amber-100 text-amber-800 border-amber-200' }
+      : { label: 'Pending — awaiting designer upload', className: 'bg-muted text-muted-foreground border-border' };
+
+  const runApproval = async (status: DesignerCoverApprovalStatus, notes?: string) => {
+    setApprovalSaving(true);
+    try {
+      await designerCoversApi.updateApproval(ticketNumber, notes ? { status, notes } : { status });
+      await refresh();
+      toast({ title: 'Approval status updated' });
+      setQueryOpen(false);
+      setQueryNotes('');
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Update failed', description: errMsg(e, 'Please try again.') });
+    } finally {
+      setApprovalSaving(false);
+    }
+  };
 
   return (
     <div className={className}>
@@ -137,7 +166,7 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
         <Badge variant="outline" className={badge.className}>{badge.label}</Badge>
       </div>
 
-      <div className="p-4">
+      <div className="p-4 space-y-4">
         {canManage && (
           <input
             ref={inputRef}
@@ -152,11 +181,17 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
           />
         )}
 
+        {!canManage && approvalStatus === 'completed' && (
+          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+            Covers have been copied to the master content library.
+          </div>
+        )}
+
         {!hasAny ? (
           <div className="flex flex-wrap items-center gap-3">
             <span className="flex items-center gap-2 text-sm text-muted-foreground">
               <ImageIcon className="h-4 w-4" />
-              {canManage ? "You have not uploaded covers yet." : "Designer has not uploaded covers yet."}
+              {canManage ? "You have not uploaded covers yet." : "No covers uploaded"}
             </span>
             {canManage && (
               <Button size="sm" variant="outline" className="gap-1.5" disabled={uploading} onClick={() => inputRef.current?.click()}>
@@ -166,6 +201,7 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
             )}
           </div>
         ) : (
+
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {BINDINGS.map((binding) => {
