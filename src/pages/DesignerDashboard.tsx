@@ -203,6 +203,42 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
   };
 
   const names = Array.isArray(proposal.display_names) ? proposal.display_names.join(', ') : '';
+  const approvalStatus = proposal.approval_status || 'pending';
+  const badgeClass =
+    approvalStatus === 'completed'
+      ? 'bg-[#16A34A] hover:bg-[#16A34A] text-white'
+      : approvalStatus === 'in_review'
+      ? 'bg-[#3B82F6] hover:bg-[#3B82F6] text-white'
+      : approvalStatus === 'query_raised'
+      ? 'bg-[#D97706] hover:bg-[#D97706] text-white'
+      : 'bg-[#94A3B8] hover:bg-[#94A3B8] text-white';
+  const badgeLabel =
+    approvalStatus === 'completed'
+      ? 'Completed'
+      : approvalStatus === 'in_review'
+      ? 'In Review'
+      : approvalStatus === 'query_raised'
+      ? 'Query Raised'
+      : 'Pending';
+  const uploadDisabled = approvalStatus === 'in_review';
+  const uploadHidden = approvalStatus === 'completed';
+
+  const uploadButton = (label: string) => (
+    <Button
+      size="sm"
+      variant="outline"
+      title={uploadDisabled ? 'Awaiting admin review' : undefined}
+      className="border-[#3d5a47] text-[#3d5a47] hover:bg-[#3d5a47] hover:text-white disabled:opacity-50"
+      onClick={() => inputRef.current?.click()}
+      disabled={uploading || uploadDisabled}
+    >
+      {uploading ? (
+        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading…</>
+      ) : (
+        <><Upload className="h-4 w-4 mr-2" /> {label}</>
+      )}
+    </Button>
+  );
 
   return (
     <Card className="p-5 space-y-4 border-border">
@@ -221,12 +257,9 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
           </div>
           <div className="text-xs text-muted-foreground pt-1">Ticket #{proposal.ticket_number}</div>
         </div>
-        {allUploaded && (
-          <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white shrink-0">
-            <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Complete
-          </Badge>
-        )}
+        <Badge className={`${badgeClass} shrink-0 rounded-full px-3`}>{badgeLabel}</Badge>
       </div>
+
 
       <input
         ref={inputRef}
