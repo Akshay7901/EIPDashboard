@@ -147,7 +147,7 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
     (response as any)?.approval ??
     null;
   const rawStatus = String(
-    coverApproval?.approval_status ?? coverApproval?.status ?? (response as any)?.approval_status ?? ''
+    coverApproval?.approval_status ?? (response as any)?.approval_status ?? ''
   ).toLowerCase().replace(/\s+/g, '_');
   const approvalStatus: DesignerCoverApprovalStatus =
     rawStatus === 'in_review' || rawStatus === 'query_raised' || rawStatus === 'completed'
