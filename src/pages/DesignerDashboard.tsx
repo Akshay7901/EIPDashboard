@@ -453,20 +453,19 @@ const DesignerDashboard: React.FC = () => {
     refetchInterval: 30000,
   });
 
-  const allProposals = data ?? [];
+  const allProposals = data?.proposals ?? [];
 
+  // Counts come straight from the API response (summary + total).
   const counts = useMemo(() => {
-    const c = { all: allProposals.length, pending: 0, in_review: 0, query_raised: 0, completed: 0 };
-    for (const p of allProposals) {
-      const s = p.approval_status || 'pending';
-      if (s === 'pending' && !p.all_uploaded) c.pending++;
-      else if (s === 'in_review') c.in_review++;
-      else if (s === 'query_raised') c.query_raised++;
-      else if (s === 'completed') c.completed++;
-      else if (s === 'pending') c.pending++;
-    }
-    return c;
-  }, [allProposals]);
+    const s = data?.summary;
+    return {
+      all: data?.total ?? allProposals.length,
+      pending: s?.pending ?? 0,
+      in_review: s?.in_review ?? 0,
+      query_raised: s?.query_raised ?? 0,
+      completed: s?.completed ?? 0,
+    };
+  }, [data?.summary, data?.total, allProposals.length]);
 
   const proposals = useMemo(() => {
     if (filter === 'all') return allProposals;
