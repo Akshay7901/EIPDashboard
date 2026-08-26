@@ -9,6 +9,8 @@ export interface DesignerCoverSlot {
   uploaded_at?: string | null;
 }
 
+export type ApprovalStatus = 'pending' | 'in_review' | 'query_raised' | 'completed';
+
 export interface DesignerProposal {
   ticket_number: string;
   full_title?: string | null;
@@ -16,10 +18,14 @@ export interface DesignerProposal {
   subtitle?: string | null;
   category?: string | null; // 'Authored' | 'Edited'
   display_names?: string[] | string | null;
+  approval_status?: ApprovalStatus;
+  approval?: { status?: string | null; notes?: string | null } | null;
+  all_uploaded?: boolean;
   covers?: Partial<Record<CoverBinding, { uploaded?: boolean; filename?: string | null; uploaded_at?: string | null }>>;
   author_cover?: { filename?: string | null; width_px?: number | null; height_px?: number | null } | null;
   [key: string]: any;
 }
+
 
 const BINDINGS: CoverBinding[] = ['hb', 'pb', 'ebook'];
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
@@ -64,6 +70,13 @@ export const normalizeDesignerProposal = (raw: any): DesignerProposal => {
     display_names = [displayRaw.trim()];
   }
 
+  const approvalObj = raw?.approval && typeof raw.approval === 'object' ? raw.approval : null;
+  const rawStatus = pickString(raw?.approval_status, approvalObj?.status)?.toLowerCase().replace(/\s+/g, '_');
+  const approval_status: ApprovalStatus =
+    rawStatus === 'in_review' || rawStatus === 'query_raised' || rawStatus === 'completed'
+      ? (rawStatus as ApprovalStatus)
+      : 'pending';
+
   return {
     ...raw,
     ticket_number: raw.ticket_number || raw.ticket || raw.id,
@@ -73,6 +86,9 @@ export const normalizeDesignerProposal = (raw: any): DesignerProposal => {
     category: pickString(raw.category, raw.book_type, raw.publication_type),
     display_names,
     covers,
+    approval_status,
+    approval: approvalObj ? { status: approvalObj.status ?? null, notes: pickString(approvalObj.notes, approvalObj.note, approvalObj.comment) } : null,
+    all_uploaded: raw?.all_uploaded ?? BINDINGS.every((b) => covers[b]?.uploaded),
     author_cover: raw?.author_cover
       ? {
           filename: pickString(raw.author_cover.filename, raw.author_cover.file_name),
@@ -84,11 +100,14 @@ export const normalizeDesignerProposal = (raw: any): DesignerProposal => {
 };
 
 export const designerApi = {
-  list: async (): Promise<DesignerProposal[]> => {
-    const { data } = await api.get('/api/proposals/designer/proposals');
+  list: async (status?: string): Promise<DesignerProposal[]> => {
+    const { data } = await api.get('/api/proposals/designer/proposals', {
+      params: status ? { status } : undefined,
+    });
     const arr = Array.isArray(data) ? data : data?.proposals || data?.data || [];
     return arr.map(normalizeDesignerProposal);
   },
+
 
   uploadCover: async (ticket: string, binding: CoverBinding, file: File): Promise<any> => {
     const form = new FormData();

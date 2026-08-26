@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Upload, CheckCircle2, LogOut, Download, Trash2 } from 'lucide-react';
+import { Loader2, Upload, CheckCircle2, LogOut, Download, Trash2, Lock } from 'lucide-react';
 import brandLogo from '@/assets/brand-logo.webp';
 import { designerCoversApi } from '@/lib/proposalsApi';
 import {
@@ -203,6 +203,42 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
   };
 
   const names = Array.isArray(proposal.display_names) ? proposal.display_names.join(', ') : '';
+  const approvalStatus = proposal.approval_status || 'pending';
+  const badgeClass =
+    approvalStatus === 'completed'
+      ? 'bg-[#16A34A] hover:bg-[#16A34A] text-white'
+      : approvalStatus === 'in_review'
+      ? 'bg-[#3B82F6] hover:bg-[#3B82F6] text-white'
+      : approvalStatus === 'query_raised'
+      ? 'bg-[#D97706] hover:bg-[#D97706] text-white'
+      : 'bg-[#94A3B8] hover:bg-[#94A3B8] text-white';
+  const badgeLabel =
+    approvalStatus === 'completed'
+      ? 'Completed'
+      : approvalStatus === 'in_review'
+      ? 'In Review'
+      : approvalStatus === 'query_raised'
+      ? 'Query Raised'
+      : 'Pending';
+  const uploadDisabled = approvalStatus === 'in_review';
+  const uploadHidden = approvalStatus === 'completed';
+
+  const uploadButton = (label: string) => (
+    <Button
+      size="sm"
+      variant="outline"
+      title={uploadDisabled ? 'Awaiting admin review' : undefined}
+      className="border-[#3d5a47] text-[#3d5a47] hover:bg-[#3d5a47] hover:text-white disabled:opacity-50"
+      onClick={() => inputRef.current?.click()}
+      disabled={uploading || uploadDisabled}
+    >
+      {uploading ? (
+        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading…</>
+      ) : (
+        <><Upload className="h-4 w-4 mr-2" /> {label}</>
+      )}
+    </Button>
+  );
 
   return (
     <Card className="p-5 space-y-4 border-border">
@@ -221,12 +257,9 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
           </div>
           <div className="text-xs text-muted-foreground pt-1">Ticket #{proposal.ticket_number}</div>
         </div>
-        {allUploaded && (
-          <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white shrink-0">
-            <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Complete
-          </Badge>
-        )}
+        <Badge className={`${badgeClass} shrink-0 rounded-full px-3`}>{badgeLabel}</Badge>
       </div>
+
 
       <input
         ref={inputRef}
@@ -243,19 +276,8 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
               ? 'Loading covers…'
               : 'No cover uploaded yet. One image covers HB, PB and eBook.'}
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-[#3d5a47] text-[#3d5a47] hover:bg-[#3d5a47] hover:text-white"
-            onClick={() => inputRef.current?.click()}
-            disabled={uploading}
-          >
-            {uploading ? (
-              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading…</>
-            ) : (
-              <><Upload className="h-4 w-4 mr-2" /> Upload Cover</>
-            )}
-          </Button>
+          {!uploadHidden && uploadButton('Upload Cover')}
+
         </div>
       ) : (
         <div className="rounded-lg border border-border bg-white p-4 space-y-4">
@@ -303,31 +325,32 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
             })}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-[#3d5a47] text-[#3d5a47] hover:bg-[#3d5a47] hover:text-white"
-              onClick={() => inputRef.current?.click()}
-              disabled={uploading}
-            >
-              {uploading ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading…</>
-              ) : (
-                <><Upload className="h-4 w-4 mr-2" /> Re-upload</>
-              )}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5 text-destructive hover:text-destructive"
-              disabled={deleting}
-              onClick={() => setConfirmDeleteOpen(true)}
-            >
-              {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-              Delete
-            </Button>
-          </div>
+          {approvalStatus === 'query_raised' && (
+            <div className="rounded-md border border-[#D97706]/40 bg-[#FEF3C7] p-3 text-sm text-[#92400E]">
+              Admin has raised a query: {proposal.approval?.notes || '—'}
+            </div>
+          )}
+
+          {uploadHidden ? (
+            <div className="flex items-center gap-2 text-sm font-medium text-[#16A34A]">
+              <Lock className="h-4 w-4" /> Approved — covers locked
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              {uploadButton('Re-upload')}
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-destructive hover:text-destructive"
+                disabled={deleting}
+                onClick={() => setConfirmDeleteOpen(true)}
+              >
+                {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                Delete
+              </Button>
+            </div>
+          )}
+
         </div>
       )}
 
@@ -411,15 +434,34 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
   );
 };
 
+const FILTERS: { label: string; value: 'all' | 'pending' | 'in_review' | 'query_raised' | 'completed' }[] = [
+  { label: 'All', value: 'all' },
+  { label: 'Pending', value: 'pending' },
+  { label: 'In Review', value: 'in_review' },
+  { label: 'Query Raised', value: 'query_raised' },
+  { label: 'Completed', value: 'completed' },
+];
+
 const DesignerDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [filter, setFilter] = useState<'all' | 'pending' | 'in_review' | 'query_raised' | 'completed'>('all');
 
-  const { data: proposals, isLoading, error } = useQuery({
-    queryKey: ['designer-proposals'],
-    queryFn: designerApi.list,
+  const serverStatus = filter === 'all' || filter === 'pending' ? undefined : filter;
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['designer-proposals', serverStatus ?? 'all'],
+    queryFn: () => designerApi.list(serverStatus),
     refetchInterval: 30000,
   });
+
+  const proposals = useMemo(() => {
+    const list = data ?? [];
+    if (filter === 'pending') {
+      return list.filter((p) => (p.approval_status || 'pending') === 'pending' && !p.all_uploaded);
+    }
+    return list;
+  }, [data, filter]);
 
   const handleLogout = async () => {
     await logout();
@@ -454,6 +496,23 @@ const DesignerDashboard: React.FC = () => {
           </p>
         </div>
 
+        <div className="flex flex-wrap items-center gap-2">
+          {FILTERS.map((f) => (
+            <button
+              key={f.value}
+              onClick={() => setFilter(f.value)}
+              className={
+                'rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ' +
+                (filter === f.value
+                  ? 'bg-[#3d5a47] text-white border-[#3d5a47]'
+                  : 'bg-white text-[#3d5a47] border-[#3d5a47]/40 hover:bg-[#3d5a47]/10')
+              }
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-6 w-6 animate-spin text-[#3d5a47]" />
@@ -462,9 +521,9 @@ const DesignerDashboard: React.FC = () => {
           <Card className="p-6 text-sm text-destructive">
             Failed to load proposals. {(error as any)?.message || ''}
           </Card>
-        ) : !proposals || proposals.length === 0 ? (
+        ) : proposals.length === 0 ? (
           <Card className="p-10 text-center text-muted-foreground">
-            No proposals assigned for cover design yet.
+            No proposals found for this filter.
           </Card>
         ) : (
           <div className="space-y-4">
