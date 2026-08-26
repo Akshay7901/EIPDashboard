@@ -246,10 +246,22 @@ export interface MetadataResponse {
   approved_at?: string | null;
   cover_image?: CoverImageData | null;
   designer_covers?: Partial<Record<DesignerCoverBinding, DesignerCoverEntry>> | null;
+  designer_cover_approval?: DesignerCoverApproval | null;
+  approval?: DesignerCoverApproval | null;
+  approval_status?: DesignerCoverApprovalStatus | null;
   revisions?: any[];
 }
 
 export type DesignerCoverBinding = 'hb' | 'pb' | 'ebook';
+
+export type DesignerCoverApprovalStatus = 'pending' | 'in_review' | 'query_raised' | 'completed';
+
+export interface DesignerCoverApproval {
+  status?: DesignerCoverApprovalStatus | string | null;
+  notes?: string | null;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+}
 
 export interface DesignerCoverEntry {
   url: string;
@@ -257,6 +269,7 @@ export interface DesignerCoverEntry {
   uploaded_by?: string;
   uploaded_at?: string;
 }
+
 
 export const designerCoversApi = {
   downloadUrl: (ticketNumber: string, binding: DesignerCoverBinding) =>
