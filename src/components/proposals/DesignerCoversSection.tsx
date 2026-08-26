@@ -81,6 +81,9 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [downloading, setDownloading] = useState<DesignerCoverBinding | null>(null);
   const [broken, setBroken] = useState<Record<string, boolean>>({});
+  const [approvalSaving, setApprovalSaving] = useState(false);
+  const [queryOpen, setQueryOpen] = useState(false);
+  const [queryNotes, setQueryNotes] = useState("");
 
   const { data: fetched } = useQuery({
     queryKey: ["metadata", ticketNumber],
@@ -278,7 +281,74 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
             )}
           </div>
         )}
+
+        {!canManage && (
+          <div className="space-y-3 pt-2 border-t border-border">
+            {approvalStatus === 'query_raised' && approval?.notes && (
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                Previous query: {approval.notes}
+              </div>
+            )}
+
+            {approvalStatus === 'completed' ? (
+              <p className="text-sm text-muted-foreground">
+                Approved{approval?.reviewed_by ? ` by ${approval.reviewed_by}` : ''}
+                {approval?.reviewed_at ? ` on ${formatDate(approval.reviewed_at)}` : ''}
+              </p>
+            ) : approvalStatus === 'in_review' ? (
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" disabled={approvalSaving} onClick={() => runApproval('completed')}>
+                  {approvalSaving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
+                  Approve
+                </Button>
+                <Button size="sm" variant="outline" disabled={approvalSaving} onClick={() => setQueryOpen(true)}>
+                  Raise Query
+                </Button>
+              </div>
+            ) : approvalStatus === 'query_raised' ? (
+              <Button size="sm" variant="outline" disabled={approvalSaving} onClick={() => runApproval('in_review')}>
+                {approvalSaving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
+                Mark as In Review
+              </Button>
+            ) : (
+              <div className="flex flex-wrap gap-2" title="Designer has not uploaded covers yet">
+                <Button size="sm" disabled>Approve</Button>
+                <Button size="sm" variant="outline" disabled>Raise Query</Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      <Dialog open={queryOpen} onOpenChange={setQueryOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Raise a query</DialogTitle>
+            <DialogDescription>
+              Describe what needs to change. The designer will see this note.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={queryNotes}
+            onChange={(e) => setQueryNotes(e.target.value)}
+            placeholder="Add your notes for the designer..."
+            rows={5}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setQueryOpen(false)} disabled={approvalSaving}>
+              Cancel
+            </Button>
+            <Button
+              disabled={approvalSaving || !queryNotes.trim()}
+              onClick={() => runApproval('query_raised', queryNotes.trim())}
+            >
+              {approvalSaving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
+              Send Query
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
         <AlertDialogContent>
