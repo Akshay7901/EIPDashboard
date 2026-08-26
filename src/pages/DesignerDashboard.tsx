@@ -325,31 +325,32 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
             })}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-[#3d5a47] text-[#3d5a47] hover:bg-[#3d5a47] hover:text-white"
-              onClick={() => inputRef.current?.click()}
-              disabled={uploading}
-            >
-              {uploading ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading…</>
-              ) : (
-                <><Upload className="h-4 w-4 mr-2" /> Re-upload</>
-              )}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5 text-destructive hover:text-destructive"
-              disabled={deleting}
-              onClick={() => setConfirmDeleteOpen(true)}
-            >
-              {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-              Delete
-            </Button>
-          </div>
+          {approvalStatus === 'query_raised' && (
+            <div className="rounded-md border border-[#D97706]/40 bg-[#FEF3C7] p-3 text-sm text-[#92400E]">
+              Admin has raised a query: {proposal.approval?.notes || '—'}
+            </div>
+          )}
+
+          {uploadHidden ? (
+            <div className="flex items-center gap-2 text-sm font-medium text-[#16A34A]">
+              <Lock className="h-4 w-4" /> Approved — covers locked
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              {uploadButton('Re-upload')}
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-destructive hover:text-destructive"
+                disabled={deleting}
+                onClick={() => setConfirmDeleteOpen(true)}
+              >
+                {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                Delete
+              </Button>
+            </div>
+          )}
+
         </div>
       )}
 
