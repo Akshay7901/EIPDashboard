@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Upload, CheckCircle2, LogOut, Download, Trash2 } from 'lucide-react';
+import { Loader2, Upload, CheckCircle2, LogOut, Download, Trash2, Lock } from 'lucide-react';
 import brandLogo from '@/assets/brand-logo.webp';
 import { designerCoversApi } from '@/lib/proposalsApi';
 import {
