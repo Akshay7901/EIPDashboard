@@ -289,16 +289,16 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
 
         {!canManage && (
           <div className="space-y-3 pt-2 border-t border-border">
-            {approvalStatus === 'query_raised' && approval?.notes && (
+            {approvalStatus === 'query_raised' && coverApproval?.notes && (
               <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                Previous query: {approval.notes}
+                Previous query: {coverApproval.notes}
               </div>
             )}
 
             {approvalStatus === 'completed' ? (
               <p className="text-sm text-muted-foreground">
-                Approved{approval?.reviewed_by ? ` by ${approval.reviewed_by}` : ''}
-                {approval?.reviewed_at ? ` on ${formatDate(approval.reviewed_at)}` : ''}
+                Approved{coverApproval?.reviewed_by ? ` by ${coverApproval.reviewed_by}` : ''}
+                {coverApproval?.reviewed_at ? ` on ${formatDate(coverApproval.reviewed_at)}` : ''}
               </p>
             ) : approvalStatus === 'in_review' ? (
               <div className="flex flex-wrap gap-2">
