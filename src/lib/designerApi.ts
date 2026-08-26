@@ -99,13 +99,23 @@ export const normalizeDesignerProposal = (raw: any): DesignerProposal => {
   };
 };
 
+export interface DesignerListResult {
+  proposals: DesignerProposal[];
+  summary?: { pending: number; in_review: number; completed: number; query_raised: number } | null;
+  total?: number | null;
+}
+
 export const designerApi = {
-  list: async (status?: string): Promise<DesignerProposal[]> => {
+  list: async (status?: string): Promise<DesignerListResult> => {
     const { data } = await api.get('/api/proposals/designer/proposals', {
       params: status ? { status } : undefined,
     });
     const arr = Array.isArray(data) ? data : data?.proposals || data?.data || [];
-    return arr.map(normalizeDesignerProposal);
+    return {
+      proposals: arr.map(normalizeDesignerProposal),
+      summary: data?.summary ?? null,
+      total: data?.total ?? null,
+    };
   },
 
 
