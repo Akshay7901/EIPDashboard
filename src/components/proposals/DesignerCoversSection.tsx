@@ -81,6 +81,9 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [downloading, setDownloading] = useState<DesignerCoverBinding | null>(null);
   const [broken, setBroken] = useState<Record<string, boolean>>({});
+  const [approvalSaving, setApprovalSaving] = useState(false);
+  const [queryOpen, setQueryOpen] = useState(false);
+  const [queryNotes, setQueryNotes] = useState("");
 
   const { data: fetched } = useQuery({
     queryKey: ["metadata", ticketNumber],
