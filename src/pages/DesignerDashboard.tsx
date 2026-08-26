@@ -447,26 +447,46 @@ const DesignerDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<'all' | 'pending' | 'in_review' | 'query_raised' | 'completed'>('all');
 
-  const serverStatus = filter === 'all' || filter === 'pending' ? undefined : filter;
-
   const { data, isLoading, error } = useQuery({
-    queryKey: ['designer-proposals', serverStatus ?? 'all'],
-    queryFn: () => designerApi.list(serverStatus),
+    queryKey: ['designer-proposals', 'all'],
+    queryFn: () => designerApi.list(),
     refetchInterval: 30000,
   });
 
-  const proposals = useMemo(() => {
-    const list = data ?? [];
-    if (filter === 'pending') {
-      return list.filter((p) => (p.approval_status || 'pending') === 'pending' && !p.all_uploaded);
+  const allProposals = data ?? [];
+
+  const counts = useMemo(() => {
+    const c = { all: allProposals.length, pending: 0, in_review: 0, query_raised: 0, completed: 0 };
+    for (const p of allProposals) {
+      const s = p.approval_status || 'pending';
+      if (s === 'pending' && !p.all_uploaded) c.pending++;
+      else if (s === 'in_review') c.in_review++;
+      else if (s === 'query_raised') c.query_raised++;
+      else if (s === 'completed') c.completed++;
+      else if (s === 'pending') c.pending++;
     }
-    return list;
-  }, [data, filter]);
+    return c;
+  }, [allProposals]);
+
+  const proposals = useMemo(() => {
+    if (filter === 'all') return allProposals;
+    if (filter === 'pending') {
+      return allProposals.filter((p) => (p.approval_status || 'pending') === 'pending' && !p.all_uploaded);
+    }
+    return allProposals.filter((p) => (p.approval_status || 'pending') === filter);
+  }, [allProposals, filter]);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login', { replace: true });
   };
+
+  const countFor = (value: typeof filter) =>
+    value === 'all' ? counts.all
+    : value === 'pending' ? counts.pending
+    : value === 'in_review' ? counts.in_review
+    : value === 'query_raised' ? counts.query_raised
+    : counts.completed;
 
   return (
     <div className="min-h-screen bg-[#faf8f5]">
@@ -502,13 +522,21 @@ const DesignerDashboard: React.FC = () => {
               key={f.value}
               onClick={() => setFilter(f.value)}
               className={
-                'rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ' +
+                'inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ' +
                 (filter === f.value
                   ? 'bg-[#3d5a47] text-white border-[#3d5a47]'
                   : 'bg-white text-[#3d5a47] border-[#3d5a47]/40 hover:bg-[#3d5a47]/10')
               }
             >
               {f.label}
+              <span
+                className={
+                  'inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs font-semibold ' +
+                  (filter === f.value ? 'bg-white/25 text-white' : 'bg-[#3d5a47]/10 text-[#3d5a47]')
+                }
+              >
+                {countFor(f.value)}
+              </span>
             </button>
           ))}
         </div>
