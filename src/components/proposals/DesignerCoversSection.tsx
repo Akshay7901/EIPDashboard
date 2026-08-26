@@ -316,10 +316,7 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
                 Mark as In Review
               </Button>
             ) : (
-              <div className="flex flex-wrap gap-2" title="Designer has not uploaded covers yet">
-                <Button size="sm" disabled>Approve</Button>
-                <Button size="sm" variant="outline" disabled>Raise Query</Button>
-              </div>
+              <p className="text-sm text-muted-foreground">Waiting for designer to upload covers.</p>
             )}
           </div>
         )}
