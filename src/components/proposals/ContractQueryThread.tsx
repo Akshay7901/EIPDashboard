@@ -306,18 +306,13 @@ const ContractQueryThread: React.FC<ContractQueryThreadProps> = ({
               "Type your response to the author's query…"
               }
               value={text}
-              onChange={(e) => {
-                if (e.target.value.length <= 1000) setText(e.target.value);
-              }}
+              onChange={(e) => setText(e.target.value)}
               rows={3} />
             
               </div>
 
               {/* Actions row */}
               <div className="flex items-center justify-between pt-1">
-                <span className="text-[11px] text-muted-foreground">
-                  {text.length}/1,000
-                </span>
                 <Button
               size="sm"
               className={cn(
