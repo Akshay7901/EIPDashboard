@@ -422,11 +422,18 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
           ) : authorCoverError ? (
             <div className="text-xs text-destructive">{authorCoverError}</div>
           ) : authorCoverUrl ? (
-            <img
-              src={authorCoverUrl}
-              alt={proposal.author_cover.filename || "Author's reference image"}
-              className="max-h-96 w-auto mx-auto rounded border border-border bg-white object-contain"
-            />
+            <>
+              <img
+                src={authorCoverUrl}
+                alt={proposal.author_cover.filename || "Author's reference image"}
+                className="max-h-96 w-auto mx-auto rounded border border-border bg-white object-contain"
+              />
+              {proposal.author_cover.source && (
+                <p className="text-xs italic text-muted-foreground text-center">
+                  <span className="font-medium not-italic">Image Source:</span> {proposal.author_cover.source}
+                </p>
+              )}
+            </>
           ) : null}
         </div>
       )}

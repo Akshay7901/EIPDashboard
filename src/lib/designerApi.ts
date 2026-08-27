@@ -22,7 +22,7 @@ export interface DesignerProposal {
   approval?: { status?: string | null; notes?: string | null } | null;
   all_uploaded?: boolean;
   covers?: Partial<Record<CoverBinding, { uploaded?: boolean; filename?: string | null; uploaded_at?: string | null }>>;
-  author_cover?: { filename?: string | null; width_px?: number | null; height_px?: number | null } | null;
+  author_cover?: { filename?: string | null; width_px?: number | null; height_px?: number | null; source?: string | null } | null;
   [key: string]: any;
 }
 
@@ -94,6 +94,7 @@ export const normalizeDesignerProposal = (raw: any): DesignerProposal => {
           filename: pickString(raw.author_cover.filename, raw.author_cover.file_name),
           width_px: raw.author_cover.width_px ?? null,
           height_px: raw.author_cover.height_px ?? null,
+          source: pickString(raw.author_cover.source, raw.author_cover.image_source),
         }
       : null,
   };
