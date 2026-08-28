@@ -158,7 +158,7 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
     approvalStatus === 'completed'
       ? { label: 'Approved', className: 'bg-emerald-100 text-emerald-800 border-emerald-200' }
       : approvalStatus === 'in_review'
-      ? { label: 'In Review', className: 'bg-blue-100 text-blue-800 border-blue-200' }
+      ? { label: 'Under Review', className: 'bg-blue-100 text-blue-800 border-blue-200' }
       : approvalStatus === 'query_raised'
       ? { label: 'Query Raised', className: 'bg-amber-100 text-amber-800 border-amber-200' }
       : { label: 'Pending — awaiting designer upload', className: 'bg-muted text-muted-foreground border-border' };
@@ -168,7 +168,7 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
     try {
       await designerCoversApi.updateApproval(ticketNumber, notes ? { status, notes } : { status });
       await refresh();
-      toast({ title: 'Approval status updated' });
+      toast({ title: status === 'query_raised' ? 'Query sent to designer' : 'Approval status updated' });
       setQueryOpen(false);
       setQueryNotes('');
     } catch (e: any) {
