@@ -100,8 +100,7 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
     setDownloading(binding);
     const fallbackName = covers?.[binding]?.filename || `${proposal.ticket_number}-${binding}.jpg`;
     try {
-      // Primary: edge-function proxy forces a real file download (bypasses S3 CORS).
-      const { blob, filename } = await designerApi.downloadCover(proposal.ticket_number, binding);
+      const { blob, filename } = await designerCoversApi.download(proposal.ticket_number, binding as any);
       saveBlob(blob, filename || fallbackName);
     } catch {
       // Fallback: use the presigned S3 URL returned with the covers payload.
