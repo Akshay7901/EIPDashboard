@@ -44,7 +44,7 @@ import { useDefaultReviewer } from "@/hooks/useDefaultReviewer";
 import ReviewCommentsDisplay from "@/components/proposals/ReviewCommentsDisplay";
 import PeerReviewReadOnly from "@/components/proposals/PeerReviewReadOnly";
 import DiffCheckerDialog from "@/components/proposals/DiffCheckerDialog";
-import PublicationMetadata from "@/components/proposals/PublicationMetadata";
+import PublicationMetadata, { type PublicationMetadataRef } from "@/components/proposals/PublicationMetadata";
 import { useContract } from "@/hooks/useContract";
 import { useRequestInfo } from "@/hooks/useRequestInfo";
 import InfoRequestPanel from "@/components/proposals/InfoRequestPanel";
@@ -172,6 +172,7 @@ const ProposalDetails: React.FC = () => {
   } = useDefaultReviewer();
   const [selectedReviewer, setSelectedReviewer] = useState<string>("");
   const reviewFormRef = useRef<PeerReviewCommentsFormHandle>(null);
+  const publicationMetadataRef = useRef<PublicationMetadataRef>(null);
   const [documentPreview, setDocumentPreview] = useState<{
     url: string;
     name: string;
@@ -875,7 +876,7 @@ const ProposalDetails: React.FC = () => {
                   </Button>
           }
               </div>
-              <PublicationMetadata proposal={proposal} contractSigned ticketNumber={ticketNum} />
+              <PublicationMetadata ref={publicationMetadataRef} proposal={proposal} contractSigned ticketNumber={ticketNum} />
             </TabsContent>
       }
 
@@ -2006,9 +2007,9 @@ const ProposalDetails: React.FC = () => {
               setIsLocking(true);
               try {
                 const ticketNum = proposal.ticket_number || id;
-                // Persist any unsaved reviewer edits before locking
-                if (reviewFormRef.current) {
-                  await reviewFormRef.current.saveDraftQuiet();
+                // Persist any unsaved publication data edits before locking
+                if (publicationMetadataRef.current) {
+                  await publicationMetadataRef.current.saveDraftQuiet();
                 }
                 await lockProposalApi.lock(ticketNum!);
                 queryClient.invalidateQueries({ queryKey: ["proposals"] });

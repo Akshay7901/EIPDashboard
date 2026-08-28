@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, forwardRef, useImperativeHandle } from "react";
 import { Check, CheckCircle2, Plus, Trash2, Loader2, MessageSquare, ImageIcon, Clock } from "lucide-react";
 import {
   AlertDialog,
@@ -29,6 +29,10 @@ interface PublicationMetadataProps {
   contractSigned?: boolean;
   authorChanges?: Record<string, { old: string; new: string }>;
   ticketNumber: string;
+}
+
+export interface PublicationMetadataRef {
+  saveDraftQuiet: () => Promise<void>;
 }
 
 interface EditableRowProps {
@@ -128,12 +132,12 @@ interface AdditionalPerson {
   email: string;
 }
 
-const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
+const PublicationMetadata = forwardRef<PublicationMetadataRef, PublicationMetadataProps>(({
   proposal,
   contractSigned,
   authorChanges = {},
   ticketNumber,
-}) => {
+}, ref) => {
   const queryClient = useQueryClient();
 
   // Fetch metadata from API
@@ -445,6 +449,32 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
       setSaving(false);
     }
   };
+
+  // Quiet save (no toast) used by parent flows (e.g. Lock Proposal).
+  // Throws on failure so the caller can abort.
+  const saveDraftQuiet = async () => {
+    await metadataApi.update(ticketNumber, {
+      ...buildPayload(),
+      notes: isApproved
+        ? "Decision reviewer updated author-approved publication data"
+        : "Draft saved",
+    });
+    if (isApproved) {
+      try {
+        await metadataApi.send(ticketNumber);
+      } catch (e) { /* already sent — ignore */ }
+      try {
+        await metadataApi.approve(ticketNumber, {
+          notes: "Decision reviewer saved final edits after author approval.",
+        });
+      } catch (e) { /* keep the saved draft even if the backend rejects re-approval */ }
+    }
+    queryClient.invalidateQueries({ queryKey: ["metadata", ticketNumber] });
+    queryClient.invalidateQueries({ queryKey: ["proposal", ticketNumber] });
+    queryClient.invalidateQueries({ queryKey: ["proposals"] });
+  };
+
+  useImperativeHandle(ref, () => ({ saveDraftQuiet }), [saveDraftQuiet]);
 
   const handleSubmitToAuthorClick = () => {
     if (hasPendingQueries) {
@@ -827,6 +857,6 @@ const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
       </Dialog>
     </div>
   );
-};
+});
 
 export default PublicationMetadata;
