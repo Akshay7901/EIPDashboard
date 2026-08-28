@@ -831,6 +831,6 @@ const PublicationMetadata = forwardRef<PublicationMetadataRef, PublicationMetada
       </Dialog>
     </div>
   );
-};
+});
 
 export default PublicationMetadata;
