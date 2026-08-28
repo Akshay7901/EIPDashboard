@@ -98,11 +98,30 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
 
   const handleDownloadBinding = async (binding: CoverBinding) => {
     setDownloading(binding);
+    const fallbackName = covers?.[binding]?.filename || `${proposal.ticket_number}-${binding}.jpg`;
     try {
       const { blob, filename } = await designerCoversApi.download(proposal.ticket_number, binding as any);
-      saveBlob(blob, filename || covers?.[binding]?.filename || `${proposal.ticket_number}-${binding}.jpg`);
+      saveBlob(blob, filename || fallbackName);
     } catch {
-      toast({ variant: 'destructive', title: 'Download failed', description: 'Please try again.' });
+      // Fallback: use the presigned S3 URL returned with the covers payload.
+      let url = covers?.[binding]?.url;
+      try {
+        if (!url) {
+          const fresh = await designerApi.getCovers(proposal.ticket_number);
+          url = fresh.covers?.[binding]?.url;
+        }
+        if (!url) throw new Error('no url');
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error('fetch failed');
+          saveBlob(await res.blob(), fallbackName);
+        } catch {
+          // S3 CORS blocked the fetch — open the file in a new tab instead.
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
+      } catch {
+        toast({ variant: 'destructive', title: 'Download failed', description: 'Please try again.' });
+      }
     } finally {
       setDownloading(null);
     }
