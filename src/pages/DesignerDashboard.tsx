@@ -264,7 +264,7 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
       <input
         ref={inputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/tiff"
+        accept="image/jpeg,.jpg,.jpeg"
         className="hidden"
         onChange={handleFileChange}
       />
