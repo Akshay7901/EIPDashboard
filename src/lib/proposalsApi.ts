@@ -284,12 +284,49 @@ export const designerCoversApi = {
     `/api/proposals/${encodeURIComponent(ticketNumber)}/designer-covers/${binding}/download`,
 
   download: async (ticketNumber: string, binding: DesignerCoverBinding): Promise<{ blob: Blob; filename?: string | null }> => {
-    const response = await api.get(designerCoversApi.downloadUrl(ticketNumber, binding), {
-      responseType: 'blob',
-    });
-    const disposition = (response.headers as any)?.['content-disposition'] as string | undefined;
-    const match = disposition?.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
-    return { blob: response.data as Blob, filename: match?.[1] ? decodeURIComponent(match[1]) : null };
+    const extractFilename = (disposition: string | null | undefined) => {
+      if (!disposition) return null;
+      const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+      if (utf8Match?.[1]) return decodeURIComponent(utf8Match[1].replace(/['"]/g, ''));
+      const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
+      return filenameMatch?.[1] ? filenameMatch[1].trim() : null;
+    };
+
+    // Primary path: edge-function proxy. A server-side fetch follows the 302
+    // redirect to S3 and streams the bytes back with Content-Disposition:
+    // attachment, bypassing the browser CORS block on the direct client call.
+    const token = localStorage.getItem('auth_token');
+    const functionsUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+    const functionsKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    if (token) {
+      try {
+        const proxyRes = await fetch(
+          `${functionsUrl}/download-designer-cover?ticket=${encodeURIComponent(ticketNumber)}&binding=${encodeURIComponent(binding)}`,
+          { method: 'GET', headers: { Authorization: `Bearer ${token}`, apikey: functionsKey } }
+        );
+        if (proxyRes.ok) {
+          return {
+            blob: await proxyRes.blob(),
+            filename: extractFilename(proxyRes.headers.get('content-disposition')) || `${ticketNumber}-${binding}.jpg`,
+          };
+        }
+      } catch {
+        // Proxy unreachable (backend paused) — try the direct API below.
+      }
+    }
+
+    // Fallback 1: direct authenticated API download (may fail on S3 CORS).
+    try {
+      const response = await api.get(designerCoversApi.downloadUrl(ticketNumber, binding), {
+        responseType: 'blob',
+      });
+      const disposition = (response.headers as any)?.['content-disposition'] as string | undefined;
+      return { blob: response.data as Blob, filename: extractFilename(disposition) };
+    } catch {
+      // CORS / network error — fall through to the presigned URL.
+    }
+
+    throw new Error('Download failed.');
   },
 
   deleteAll: async (ticketNumber: string): Promise<any> => {

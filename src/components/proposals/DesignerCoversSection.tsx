@@ -103,18 +103,40 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
 
   const handleDownload = async (binding: DesignerCoverBinding) => {
     setDownloading(binding);
+    const fallbackName = covers?.[binding]?.filename || `${ticketNumber}-${binding}.jpg`;
     try {
       const { blob, filename } = await designerCoversApi.download(ticketNumber, binding);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = filename || covers?.[binding]?.filename || `${ticketNumber}-${binding}.jpg`;
+      a.download = filename || fallbackName;
       document.body.appendChild(a);
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
     } catch {
-      toast({ variant: "destructive", title: "Download failed. Please try again." });
+      // Fallback: try the presigned S3 URL returned with the covers payload.
+      const url = covers?.[binding]?.url;
+      try {
+        if (!url) throw new Error("no url");
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("fetch failed");
+        const blobUrl = URL.createObjectURL(await res.blob());
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = fallbackName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+      } catch {
+        if (url) {
+          // S3 CORS blocked the fetch — open the file in a new tab instead.
+          window.open(url, "_blank", "noopener,noreferrer");
+        } else {
+          toast({ variant: "destructive", title: "Download failed. Please try again." });
+        }
+      }
     } finally {
       setDownloading(null);
     }

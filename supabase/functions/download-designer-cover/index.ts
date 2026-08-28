@@ -16,8 +16,16 @@ const BINDING_LABEL: Record<string, string> = {
   ebook: 'ebook',
 };
 
-const safeFilename = (value: string | null, binding: string) => {
-  const base = (value || `${binding}-cover`).replace(/[\\/:*?"<>|]+/g, '-').trim();
+const filenameFromContentDisposition = (value: string | null): string | null => {
+  if (!value) return null;
+  const utf8Match = value.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) return decodeURIComponent(utf8Match[1].replace(/['"]/g, ''));
+  const filenameMatch = value.match(/filename="?([^";]+)"?/i);
+  return filenameMatch?.[1] ? filenameMatch[1].trim() : null;
+};
+
+const safeFilename = (value: string | null, ticket: string, binding: string) => {
+  const base = (value || `${ticket}-${BINDING_LABEL[binding]}`).replace(/[\\/:*?"<>|]+/g, '-').trim();
   const ext = base.toLowerCase().endsWith('.jpg') || base.toLowerCase().endsWith('.jpeg') ? '' : '.jpg';
   return `${base}${ext}`;
 };
@@ -60,45 +68,33 @@ serve(async (req) => {
       });
     }
 
-    // Ask the EthicsPress API for the presigned cover URL for this binding.
-    const coverResponse = await fetch(
-      `${API_BASE_URL}/api/proposals/designer/proposals/${encodeURIComponent(ticket)}/cover/${encodeURIComponent(binding)}`,
-      { headers: { Authorization: authHeader, Accept: 'application/json' } }
+    // Proxy the EthicsPress download endpoint server-side. A server-side fetch
+    // follows any 302 redirect to S3 and reads the bytes without the browser's
+    // cross-origin (CORS) restrictions that block the same call from the client.
+    const downloadResponse = await fetch(
+      `${API_BASE_URL}/api/proposals/${encodeURIComponent(ticket)}/designer-covers/${encodeURIComponent(binding)}/download`,
+      {
+        method: 'GET',
+        headers: { Authorization: authHeader, Accept: 'image/*, application/octet-stream, */*' },
+        redirect: 'follow',
+      }
     );
 
-    if (!coverResponse.ok) {
-      const message = await coverResponse.text();
-      return new Response(JSON.stringify({ error: message || 'Could not get cover URL' }), {
-        status: coverResponse.status,
+    if (!downloadResponse.ok || !downloadResponse.body) {
+      const message = await downloadResponse.text();
+      return new Response(JSON.stringify({ error: message || 'Could not download cover' }), {
+        status: downloadResponse.status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const cover = await coverResponse.json();
-    const imageUrl =
-      cover?.url || cover?.download_url || cover?.presigned_url || cover?.signed_url;
-    if (!imageUrl) {
-      return new Response(JSON.stringify({ error: 'No cover URL returned' }), {
-        status: 502,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const filename =
+      filenameFromContentDisposition(downloadResponse.headers.get('content-disposition')) ||
+      safeFilename(null, ticket, binding);
+    const contentType =
+      downloadResponse.headers.get('content-type') || 'image/jpeg';
 
-    const imageResponse = await fetch(imageUrl);
-    if (!imageResponse.ok || !imageResponse.body) {
-      return new Response(JSON.stringify({ error: 'Could not download cover' }), {
-        status: imageResponse.status || 502,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const filename = safeFilename(
-      cover?.filename || `${ticket}-${BINDING_LABEL[binding]}`,
-      binding
-    );
-    const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
-
-    return new Response(imageResponse.body, {
+    return new Response(downloadResponse.body, {
       status: 200,
       headers: {
         ...corsHeaders,
