@@ -230,6 +230,9 @@ export const useProposals = (options: UseProposalsOptions = {}) => {
         if (actionRequired) {
           proposals = proposals.filter(p => p.action_required === true);
         }
+        if (awaitingCoverReview) {
+          proposals = proposals.filter(p => (p.cover_status || '').toLowerCase() === 'in_review');
+        }
       }
 
       // Client-side filtering for search (search is not supported server-side)
