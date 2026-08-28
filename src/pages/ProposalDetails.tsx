@@ -876,7 +876,7 @@ const ProposalDetails: React.FC = () => {
                   </Button>
           }
               </div>
-              <PublicationMetadata proposal={proposal} contractSigned ticketNumber={ticketNum} />
+              <PublicationMetadata ref={publicationMetadataRef} proposal={proposal} contractSigned ticketNumber={ticketNum} />
             </TabsContent>
       }
 
