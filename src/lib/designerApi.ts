@@ -149,53 +149,6 @@ export const designerApi = {
     return data?.url || data?.presigned_url || data?.signed_url || '';
   },
 
-  downloadCover: async (
-    ticket: string,
-    binding: CoverBinding
-  ): Promise<{ blob: Blob; filename?: string | null }> => {
-    // Primary path: edge-function proxy (streams the file with Content-Disposition:
-    // attachment, bypassing S3 CORS that blocks a direct browser fetch).
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      try {
-        const response = await fetch(
-          `${FUNCTIONS_URL}/download-designer-cover?ticket=${encodeURIComponent(ticket)}&binding=${encodeURIComponent(binding)}`,
-          { method: 'GET', headers: { Authorization: `Bearer ${token}`, apikey: FUNCTIONS_KEY } }
-        );
-        if (response.ok) {
-          return {
-            blob: await response.blob(),
-            filename:
-              filenameFromContentDisposition(response.headers.get('content-disposition')) ||
-              `${ticket}-${binding}.jpg`,
-          };
-        }
-      } catch {
-        // Proxy unreachable (backend asleep/paused) — try direct paths below.
-      }
-    }
-
-    // Fallback 1: presigned cover URL fetched directly in the browser.
-    try {
-      const signedUrl = await designerApi.getCoverUrl(ticket, binding);
-      if (signedUrl) {
-        const direct = await fetch(signedUrl);
-        if (direct.ok) {
-          return {
-            blob: await direct.blob(),
-            filename:
-              filenameFromContentDisposition(direct.headers.get('content-disposition')) ||
-              `${ticket}-${binding}.jpg`,
-          };
-        }
-      }
-    } catch {
-      // S3 CORS blocked the direct fetch — fall through to open-in-tab.
-    }
-
-    throw new Error('Download failed.');
-  },
-
   getCovers: async (
     ticket: string
   ): Promise<{
