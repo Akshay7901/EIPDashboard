@@ -31,6 +31,10 @@ interface PublicationMetadataProps {
   ticketNumber: string;
 }
 
+export interface PublicationMetadataRef {
+  saveDraftQuiet: () => Promise<void>;
+}
+
 interface EditableRowProps {
   label: string;
   sublabel?: string;
