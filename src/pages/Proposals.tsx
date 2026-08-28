@@ -199,6 +199,10 @@ const Proposals: React.FC = () => {
   // Use status_summary from API response directly
   const statusSummary: Record<string, number> | null = data?.status_summary || null;
 
+  // Locked tab + awaiting-cover-review sub-filter (admin / decision reviewer only)
+  const isLockedTab = isReviewer1 && statusFilter.includes('locked');
+  const lockedAwaitingCover = statusSummary?.locked_awaiting_cover ?? 0;
+
   // Build status options for dropdown from status_summary keys
   const statusOptions = React.useMemo(() => {
     if (!statusSummary) return [{ value: "all" as const, label: "All Statuses" }];
