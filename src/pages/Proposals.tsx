@@ -413,6 +413,38 @@ const Proposals: React.FC = () => {
             </button>
           )}
 
+          {/* Awaiting Cover Review sub-filter — only inside the Locked tab */}
+          {isLockedTab && (
+            <button
+              disabled={lockedAwaitingCover === 0}
+              onClick={() => {
+                if (lockedAwaitingCover === 0) return;
+                setAwaitingCoverReview((prev) => !prev);
+                setDisplayCount(ITEMS_PER_PAGE);
+              }}
+              className={cn(
+                "inline-flex items-center gap-2 px-4 h-9 text-sm font-medium border rounded-full transition-all whitespace-nowrap",
+                awaitingCoverReview
+                  ? "bg-[#f59e0b] text-white border-[#f59e0b] ring-2 ring-offset-2 ring-[#f59e0b]"
+                  : lockedAwaitingCover === 0
+                    ? "bg-muted text-muted-foreground border-border opacity-60 cursor-not-allowed"
+                    : "bg-background text-[#f59e0b] border-[#f59e0b] hover:bg-[#f59e0b]/10"
+              )}
+            >
+              Awaiting Cover Review
+              <span
+                className={cn(
+                  "inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs font-semibold rounded-full",
+                  awaitingCoverReview
+                    ? "bg-[#b45309] text-white"
+                    : "bg-[#f59e0b]/20 text-[#b45309]"
+                )}
+              >
+                {lockedAwaitingCover}
+              </span>
+            </button>
+          )}
+
           <button
             onClick={() => { setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc'); setDisplayCount(ITEMS_PER_PAGE); }}
             className={cn(
