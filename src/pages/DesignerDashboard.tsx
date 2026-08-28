@@ -113,7 +113,7 @@ const ProposalCard: React.FC<{ proposal: DesignerProposal }> = ({ proposal }) =>
       toast({
         variant: 'destructive',
         title: 'Invalid file type',
-        description: 'Only image files are allowed (JPEG, PNG, GIF, WEBP, TIFF)',
+        description: 'Only JPG images are allowed',
       });
       return;
     }
