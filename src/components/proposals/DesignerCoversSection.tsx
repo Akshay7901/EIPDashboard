@@ -316,10 +316,7 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
                 </Button>
               </div>
             ) : approvalStatus === 'query_raised' ? (
-              <Button size="sm" variant="outline" disabled={approvalSaving} onClick={() => runApproval('in_review')}>
-                {approvalSaving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
-                Mark as In Review
-              </Button>
+              <p className="text-sm text-muted-foreground">Query raised — awaiting designer re-upload.</p>
             ) : (
               <p className="text-sm text-muted-foreground">Waiting for designer to upload covers.</p>
             )}
