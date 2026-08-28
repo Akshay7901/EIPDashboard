@@ -132,7 +132,7 @@ const mapApiProposalDetail = (apiProposal: ApiProposalDetail): Proposal => {
 const fetchProposalsList = async (
   limit: number,
   offset: number,
-  options?: { status?: string | string[]; actionRequired?: boolean; sortOrder?: 'asc' | 'desc' }
+  options?: { status?: string | string[]; actionRequired?: boolean; sortOrder?: 'asc' | 'desc'; awaitingCoverReview?: boolean }
 ): Promise<ApiProposalsResponse> => {
   const token = localStorage.getItem('auth_token');
   if (!token) throw new Error('Not authenticated');
@@ -148,6 +148,10 @@ const fetchProposalsList = async (
 
   if (options?.actionRequired) {
     params.set('action_required', 'true');
+  }
+
+  if (options?.awaitingCoverReview) {
+    params.set('awaiting_cover_review', 'true');
   }
 
   if (options?.sortOrder) {
