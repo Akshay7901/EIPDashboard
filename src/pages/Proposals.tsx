@@ -158,6 +158,7 @@ const Proposals: React.FC = () => {
   const [searchCategory, setSearchCategory] = useState<string>("author");
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [actionRequiredFilter, setActionRequiredFilter] = useState(false);
+  const [awaitingCoverReview, setAwaitingCoverReview] = useState(false);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
   // Peer reviewers use client-side filtering (their status keys like "assigned", "pending"
@@ -170,6 +171,7 @@ const Proposals: React.FC = () => {
     status: isReviewer2 ? "all" : (statusFilter.length === 0 ? "all" : statusFilter),
     actionRequired: actionRequiredFilter,
     sortOrder,
+    awaitingCoverReview,
   });
 
   /* ---------- Derived data ---------- */
@@ -196,6 +198,10 @@ const Proposals: React.FC = () => {
 
   // Use status_summary from API response directly
   const statusSummary: Record<string, number> | null = data?.status_summary || null;
+
+  // Locked tab + awaiting-cover-review sub-filter (admin / decision reviewer only)
+  const isLockedTab = isReviewer1 && statusFilter.includes('locked');
+  const lockedAwaitingCover = statusSummary?.locked_awaiting_cover ?? 0;
 
   // Build status options for dropdown from status_summary keys
   const statusOptions = React.useMemo(() => {
@@ -226,9 +232,12 @@ const Proposals: React.FC = () => {
     setDisplayCount(ITEMS_PER_PAGE);
   };
   const handleStatusChange = (value: string) => {
-    setStatusFilter(prev =>
-      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
-    );
+    setStatusFilter(prev => {
+      const next = prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value];
+      // Leaving the Locked tab resets the cover-review sub-filter
+      if (!next.includes('locked')) setAwaitingCoverReview(false);
+      return next;
+    });
     setDisplayCount(ITEMS_PER_PAGE);
   };
   // Infinite scroll
@@ -404,6 +413,38 @@ const Proposals: React.FC = () => {
             </button>
           )}
 
+          {/* Awaiting Cover Review sub-filter — only inside the Locked tab */}
+          {isLockedTab && (
+            <button
+              disabled={lockedAwaitingCover === 0}
+              onClick={() => {
+                if (lockedAwaitingCover === 0) return;
+                setAwaitingCoverReview((prev) => !prev);
+                setDisplayCount(ITEMS_PER_PAGE);
+              }}
+              className={cn(
+                "inline-flex items-center gap-2 px-4 h-9 text-sm font-medium border rounded-full transition-all whitespace-nowrap",
+                awaitingCoverReview
+                  ? "bg-[#f59e0b] text-white border-[#f59e0b] ring-2 ring-offset-2 ring-[#f59e0b]"
+                  : lockedAwaitingCover === 0
+                    ? "bg-muted text-muted-foreground border-border opacity-60 cursor-not-allowed"
+                    : "bg-background text-[#f59e0b] border-[#f59e0b] hover:bg-[#f59e0b]/10"
+              )}
+            >
+              Awaiting Cover Review
+              <span
+                className={cn(
+                  "inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs font-semibold rounded-full",
+                  awaitingCoverReview
+                    ? "bg-[#b45309] text-white"
+                    : "bg-[#f59e0b]/20 text-[#b45309]"
+                )}
+              >
+                {lockedAwaitingCover}
+              </span>
+            </button>
+          )}
+
           <button
             onClick={() => { setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc'); setDisplayCount(ITEMS_PER_PAGE); }}
             className={cn(
@@ -551,6 +592,11 @@ const Proposals: React.FC = () => {
                               })()}
                             </div>
                           </TooltipProvider>
+                          {(proposal.cover_status || '').toLowerCase() === 'in_review' && (
+                            <span className="mt-1 inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded-full border border-[#f59e0b] text-[#b45309] bg-[#f59e0b]/10 whitespace-nowrap">
+                              Cover Review Needed
+                            </span>
+                          )}
                         </TableCell>
                         {isAdmin && (
                           <TableCell className="text-center">

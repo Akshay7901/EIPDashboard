@@ -12,6 +12,7 @@ interface UseProposalsOptions {
   status?: string | string[] | 'all';
   actionRequired?: boolean;
   sortOrder?: 'asc' | 'desc';
+  awaitingCoverReview?: boolean;
 }
 
 // No status mapping needed — the API returns role-appropriate display text directly
@@ -65,6 +66,7 @@ const mapApiProposal = (apiProposal: any): Proposal => {
     assigned_reviewers: normalizeAssignments(apiProposal.assigned_reviewers || apiProposal.assignments),
     action_required: apiProposal.action_required ?? false,
     metadata_status: apiProposal.metadata_status ?? apiProposal.current_data?.metadata_status ?? null,
+    cover_status: apiProposal.cover_status ?? null,
     ai_review_score: apiProposal.ai_review_score ?? apiProposal.ai_review?.final_score ?? null,
   };
 };
@@ -130,7 +132,7 @@ const mapApiProposalDetail = (apiProposal: ApiProposalDetail): Proposal => {
 const fetchProposalsList = async (
   limit: number,
   offset: number,
-  options?: { status?: string | string[]; actionRequired?: boolean; sortOrder?: 'asc' | 'desc' }
+  options?: { status?: string | string[]; actionRequired?: boolean; sortOrder?: 'asc' | 'desc'; awaitingCoverReview?: boolean }
 ): Promise<ApiProposalsResponse> => {
   const token = localStorage.getItem('auth_token');
   if (!token) throw new Error('Not authenticated');
@@ -146,6 +148,10 @@ const fetchProposalsList = async (
 
   if (options?.actionRequired) {
     params.set('action_required', 'true');
+  }
+
+  if (options?.awaitingCoverReview) {
+    params.set('awaiting_cover_review', 'true');
   }
 
   if (options?.sortOrder) {
@@ -182,13 +188,13 @@ const fetchProposalByTicket = async (ticketNumber: string): Promise<ApiProposalD
 };
 
 export const useProposals = (options: UseProposalsOptions = {}) => {
-  const { page = 1, limit = 10, search = '', searchCategory = 'author', status = 'all', actionRequired = false, sortOrder = 'desc' } = options;
+  const { page = 1, limit = 10, search = '', searchCategory = 'author', status = 'all', actionRequired = false, sortOrder = 'desc', awaitingCoverReview = false } = options;
 
   return useQuery({
-    queryKey: ['proposals', page, limit, search, searchCategory, status, actionRequired, sortOrder],
+    queryKey: ['proposals', page, limit, search, searchCategory, status, actionRequired, sortOrder, awaitingCoverReview],
     queryFn: async () => {
       const offset = (page - 1) * limit;
-      const hasServerFilters = (status !== 'all') || actionRequired;
+      const hasServerFilters = (status !== 'all') || actionRequired || awaitingCoverReview;
 
       // Try server-side filters first; fall back to unfiltered + client-side
       let apiData: any;
@@ -200,6 +206,7 @@ export const useProposals = (options: UseProposalsOptions = {}) => {
             status: status !== 'all' ? status : undefined,
             actionRequired,
             sortOrder,
+            awaitingCoverReview,
           });
           usedServerFilters = true;
         } catch {
@@ -222,6 +229,9 @@ export const useProposals = (options: UseProposalsOptions = {}) => {
         }
         if (actionRequired) {
           proposals = proposals.filter(p => p.action_required === true);
+        }
+        if (awaitingCoverReview) {
+          proposals = proposals.filter(p => (p.cover_status || '').toLowerCase() === 'in_review');
         }
       }
 
