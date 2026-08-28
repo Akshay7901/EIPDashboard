@@ -2006,6 +2006,10 @@ const ProposalDetails: React.FC = () => {
               setIsLocking(true);
               try {
                 const ticketNum = proposal.ticket_number || id;
+                // Persist any unsaved reviewer edits before locking
+                if (reviewFormRef.current) {
+                  await reviewFormRef.current.saveDraftQuiet();
+                }
                 await lockProposalApi.lock(ticketNum!);
                 queryClient.invalidateQueries({ queryKey: ["proposals"] });
                 queryClient.invalidateQueries({ queryKey: ["proposal", ticketNum] });
