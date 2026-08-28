@@ -158,6 +158,7 @@ const Proposals: React.FC = () => {
   const [searchCategory, setSearchCategory] = useState<string>("author");
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [actionRequiredFilter, setActionRequiredFilter] = useState(false);
+  const [awaitingCoverReview, setAwaitingCoverReview] = useState(false);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
   // Peer reviewers use client-side filtering (their status keys like "assigned", "pending"
@@ -170,6 +171,7 @@ const Proposals: React.FC = () => {
     status: isReviewer2 ? "all" : (statusFilter.length === 0 ? "all" : statusFilter),
     actionRequired: actionRequiredFilter,
     sortOrder,
+    awaitingCoverReview,
   });
 
   /* ---------- Derived data ---------- */
