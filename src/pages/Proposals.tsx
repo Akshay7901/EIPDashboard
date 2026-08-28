@@ -228,9 +228,12 @@ const Proposals: React.FC = () => {
     setDisplayCount(ITEMS_PER_PAGE);
   };
   const handleStatusChange = (value: string) => {
-    setStatusFilter(prev =>
-      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
-    );
+    setStatusFilter(prev => {
+      const next = prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value];
+      // Leaving the Locked tab resets the cover-review sub-filter
+      if (!next.includes('locked')) setAwaitingCoverReview(false);
+      return next;
+    });
     setDisplayCount(ITEMS_PER_PAGE);
   };
   // Infinite scroll
