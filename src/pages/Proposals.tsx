@@ -592,6 +592,11 @@ const Proposals: React.FC = () => {
                               })()}
                             </div>
                           </TooltipProvider>
+                          {(proposal.cover_status || '').toLowerCase() === 'in_review' && (
+                            <span className="mt-1 inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded-full border border-[#f59e0b] text-[#b45309] bg-[#f59e0b]/10 whitespace-nowrap">
+                              Cover Review Needed
+                            </span>
+                          )}
                         </TableCell>
                         {isAdmin && (
                           <TableCell className="text-center">
