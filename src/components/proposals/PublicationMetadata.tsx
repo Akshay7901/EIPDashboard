@@ -450,6 +450,32 @@ const PublicationMetadata = forwardRef<PublicationMetadataRef, PublicationMetada
     }
   };
 
+  // Quiet save (no toast) used by parent flows (e.g. Lock Proposal).
+  // Throws on failure so the caller can abort.
+  const saveDraftQuiet = async () => {
+    await metadataApi.update(ticketNumber, {
+      ...buildPayload(),
+      notes: isApproved
+        ? "Decision reviewer updated author-approved publication data"
+        : "Draft saved",
+    });
+    if (isApproved) {
+      try {
+        await metadataApi.send(ticketNumber);
+      } catch (e) { /* already sent — ignore */ }
+      try {
+        await metadataApi.approve(ticketNumber, {
+          notes: "Decision reviewer saved final edits after author approval.",
+        });
+      } catch (e) { /* keep the saved draft even if the backend rejects re-approval */ }
+    }
+    queryClient.invalidateQueries({ queryKey: ["metadata", ticketNumber] });
+    queryClient.invalidateQueries({ queryKey: ["proposal", ticketNumber] });
+    queryClient.invalidateQueries({ queryKey: ["proposals"] });
+  };
+
+  useImperativeHandle(ref, () => ({ saveDraftQuiet }), [saveDraftQuiet]);
+
   const handleSubmitToAuthorClick = () => {
     if (hasPendingQueries) {
       // Initialize dialog responses for each pending query
