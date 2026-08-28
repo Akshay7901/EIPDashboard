@@ -2007,9 +2007,9 @@ const ProposalDetails: React.FC = () => {
               setIsLocking(true);
               try {
                 const ticketNum = proposal.ticket_number || id;
-                // Persist any unsaved reviewer edits before locking
-                if (reviewFormRef.current) {
-                  await reviewFormRef.current.saveDraftQuiet();
+                // Persist any unsaved publication data edits before locking
+                if (publicationMetadataRef.current) {
+                  await publicationMetadataRef.current.saveDraftQuiet();
                 }
                 await lockProposalApi.lock(ticketNum!);
                 queryClient.invalidateQueries({ queryKey: ["proposals"] });
