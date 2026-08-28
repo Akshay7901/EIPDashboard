@@ -296,10 +296,15 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
             )}
 
             {approvalStatus === 'completed' ? (
-              <p className="text-sm text-muted-foreground">
-                Approved{coverApproval?.reviewed_by ? ` by ${coverApproval.reviewed_by}` : ''}
-                {coverApproval?.reviewed_at ? ` on ${formatDate(coverApproval.reviewed_at)}` : ''}
-              </p>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Approved{coverApproval?.reviewed_by ? ` by ${coverApproval.reviewed_by}` : ''}
+                  {coverApproval?.reviewed_at ? ` on ${formatDate(coverApproval.reviewed_at)}` : ''}
+                </p>
+                <Button size="sm" variant="outline" disabled={approvalSaving} onClick={() => setQueryOpen(true)}>
+                  Raise Query
+                </Button>
+              </div>
             ) : approvalStatus === 'in_review' ? (
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" disabled={approvalSaving} onClick={() => runApproval('completed')}>
