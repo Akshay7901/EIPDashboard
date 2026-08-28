@@ -158,7 +158,7 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
     approvalStatus === 'completed'
       ? { label: 'Approved', className: 'bg-emerald-100 text-emerald-800 border-emerald-200' }
       : approvalStatus === 'in_review'
-      ? { label: 'In Review', className: 'bg-blue-100 text-blue-800 border-blue-200' }
+      ? { label: 'Under Review', className: 'bg-blue-100 text-blue-800 border-blue-200' }
       : approvalStatus === 'query_raised'
       ? { label: 'Query Raised', className: 'bg-amber-100 text-amber-800 border-amber-200' }
       : { label: 'Pending — awaiting designer upload', className: 'bg-muted text-muted-foreground border-border' };
@@ -168,7 +168,7 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
     try {
       await designerCoversApi.updateApproval(ticketNumber, notes ? { status, notes } : { status });
       await refresh();
-      toast({ title: 'Approval status updated' });
+      toast({ title: status === 'query_raised' ? 'Query sent to designer' : 'Approval status updated' });
       setQueryOpen(false);
       setQueryNotes('');
     } catch (e: any) {
@@ -296,10 +296,15 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
             )}
 
             {approvalStatus === 'completed' ? (
-              <p className="text-sm text-muted-foreground">
-                Approved{coverApproval?.reviewed_by ? ` by ${coverApproval.reviewed_by}` : ''}
-                {coverApproval?.reviewed_at ? ` on ${formatDate(coverApproval.reviewed_at)}` : ''}
-              </p>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Approved{coverApproval?.reviewed_by ? ` by ${coverApproval.reviewed_by}` : ''}
+                  {coverApproval?.reviewed_at ? ` on ${formatDate(coverApproval.reviewed_at)}` : ''}
+                </p>
+                <Button size="sm" variant="outline" disabled={approvalSaving} onClick={() => setQueryOpen(true)}>
+                  Raise Query
+                </Button>
+              </div>
             ) : approvalStatus === 'in_review' ? (
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" disabled={approvalSaving} onClick={() => runApproval('completed')}>
@@ -325,15 +330,15 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
       <Dialog open={queryOpen} onOpenChange={setQueryOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Raise a query</DialogTitle>
+            <DialogTitle>{approvalStatus === 'completed' ? 'Raise Post-Approval Query' : 'Raise a query'}</DialogTitle>
             <DialogDescription>
-              Describe what needs to change. The designer will see this note.
+              Query / notes for designer. The designer will see this note.
             </DialogDescription>
           </DialogHeader>
           <Textarea
             value={queryNotes}
             onChange={(e) => setQueryNotes(e.target.value)}
-            placeholder="Add your notes for the designer..."
+            placeholder="Describe what needs to be revised…"
             rows={5}
           />
           <DialogFooter>
