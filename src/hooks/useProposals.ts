@@ -188,13 +188,13 @@ const fetchProposalByTicket = async (ticketNumber: string): Promise<ApiProposalD
 };
 
 export const useProposals = (options: UseProposalsOptions = {}) => {
-  const { page = 1, limit = 10, search = '', searchCategory = 'author', status = 'all', actionRequired = false, sortOrder = 'desc' } = options;
+  const { page = 1, limit = 10, search = '', searchCategory = 'author', status = 'all', actionRequired = false, sortOrder = 'desc', awaitingCoverReview = false } = options;
 
   return useQuery({
-    queryKey: ['proposals', page, limit, search, searchCategory, status, actionRequired, sortOrder],
+    queryKey: ['proposals', page, limit, search, searchCategory, status, actionRequired, sortOrder, awaitingCoverReview],
     queryFn: async () => {
       const offset = (page - 1) * limit;
-      const hasServerFilters = (status !== 'all') || actionRequired;
+      const hasServerFilters = (status !== 'all') || actionRequired || awaitingCoverReview;
 
       // Try server-side filters first; fall back to unfiltered + client-side
       let apiData: any;
@@ -206,6 +206,7 @@ export const useProposals = (options: UseProposalsOptions = {}) => {
             status: status !== 'all' ? status : undefined,
             actionRequired,
             sortOrder,
+            awaitingCoverReview,
           });
           usedServerFilters = true;
         } catch {
