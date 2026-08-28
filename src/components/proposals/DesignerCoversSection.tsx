@@ -330,15 +330,15 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
       <Dialog open={queryOpen} onOpenChange={setQueryOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Raise a query</DialogTitle>
+            <DialogTitle>{approvalStatus === 'completed' ? 'Raise Post-Approval Query' : 'Raise a query'}</DialogTitle>
             <DialogDescription>
-              Describe what needs to change. The designer will see this note.
+              Query / notes for designer. The designer will see this note.
             </DialogDescription>
           </DialogHeader>
           <Textarea
             value={queryNotes}
             onChange={(e) => setQueryNotes(e.target.value)}
-            placeholder="Add your notes for the designer..."
+            placeholder="Describe what needs to be revised…"
             rows={5}
           />
           <DialogFooter>
