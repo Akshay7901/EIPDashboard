@@ -132,12 +132,12 @@ interface AdditionalPerson {
   email: string;
 }
 
-const PublicationMetadata: React.FC<PublicationMetadataProps> = ({
+const PublicationMetadata = forwardRef<PublicationMetadataRef, PublicationMetadataProps>(({
   proposal,
   contractSigned,
   authorChanges = {},
   ticketNumber,
-}) => {
+}, ref) => {
   const queryClient = useQueryClient();
 
   // Fetch metadata from API
