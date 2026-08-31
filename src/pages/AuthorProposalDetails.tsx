@@ -39,6 +39,7 @@ import { useContractQueries } from "@/hooks/useContractQueries";
 import { toast } from "@/hooks/use-toast";
 import brandLogo from "@/assets/brand-logo.webp";
 import ContractQueryThread from "@/components/proposals/ContractQueryThread";
+import ContributorsPanel from "@/components/proposals/ContributorsPanel";
 import AuthorPublicationMetadata from "@/components/proposals/AuthorPublicationMetadata";
 import InfoRequestPanel from "@/components/proposals/InfoRequestPanel";
 import { useRequestInfo } from "@/hooks/useRequestInfo";
@@ -738,6 +739,8 @@ const AuthorProposalDetails: React.FC = () => {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
+
+            {ticketNum && <ContributorsPanel ticketNumber={ticketNum} readOnly />}
           </TabsContent>
 
           {/* ---- METADATA TAB (only after contract signed) ---- */}
