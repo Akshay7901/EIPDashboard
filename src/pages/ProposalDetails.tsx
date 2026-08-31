@@ -50,6 +50,8 @@ import { useRequestInfo } from "@/hooks/useRequestInfo";
 import InfoRequestPanel from "@/components/proposals/InfoRequestPanel";
 import AiAssistanceSplitView from "@/components/proposals/AiAssistanceSplitView";
 import AiReviewPanel from "@/components/proposals/AiReviewPanel";
+import ContributorsPanel from "@/components/proposals/ContributorsPanel";
+import CoAuthorsPanel from "@/components/proposals/CoAuthorsPanel";
 
 /* ---------------- Helpers ---------------- */
 
@@ -856,6 +858,9 @@ const ProposalDetails: React.FC = () => {
                   {proposal.biography}
                 </p>
               </div>}
+
+            {ticketNum && (isReviewer1 || isAdmin) && <CoAuthorsPanel ticketNumber={ticketNum} />}
+            {ticketNum && <ContributorsPanel ticketNumber={ticketNum} />}
           </TabsContent>
 
           {/* ---- METADATA (Decision Reviewer - only after contract signed) ---- */}
