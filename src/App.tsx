@@ -20,6 +20,7 @@ import DesignerDashboard from "./pages/DesignerDashboard";
 import ContractSigning from "./pages/ContractSigning";
 import ContractComplete from "./pages/ContractComplete";
 import SigningComplete from "./pages/SigningComplete";
+import ContributorConfirm from "./pages/ContributorConfirm";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/proposals/contributor/confirm/:token" element={<ContributorConfirm />} />
 
             {/* Protected routes */}
             <Route
