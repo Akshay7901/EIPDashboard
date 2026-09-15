@@ -212,7 +212,6 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
     fileSize?: number;
     width?: number;
     height?: number;
-    dpi?: number | null;
     errors: string[];
     isValid: boolean;
   } | null>(null);
@@ -231,9 +230,8 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
     { field: "", newValue: "" },
   ]);
 
-  const MIN_DIMENSION = 2360;
   const MAX_FILE_SIZE_MB = 10;
-  const MIN_DPI = 300;
+  const MIN_DIMENSION = 2360;
 
   const validateImageDimensions = (file: File): Promise<{ width: number; height: number }> => {
     return new Promise((resolve, reject) => {
@@ -250,91 +248,6 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
     });
   };
 
-  /** Parse DPI from JPEG JFIF (APP0) or EXIF (APP1) headers */
-  const extractJpegDpi = (buffer: ArrayBuffer): number | null => {
-    const view = new DataView(buffer);
-    if (view.getUint16(0) !== 0xFFD8) return null; // Not JPEG
-
-    let offset = 2;
-    while (offset < view.byteLength - 4) {
-      const marker = view.getUint16(offset);
-      if (marker === 0xFFDA) break; // Start of scan – stop
-
-      const segLen = view.getUint16(offset + 2);
-
-      // JFIF APP0
-      if (marker === 0xFFE0 && segLen >= 14) {
-        const units = view.getUint8(offset + 11);
-        const xDensity = view.getUint16(offset + 12);
-        const yDensity = view.getUint16(offset + 14);
-        if (units === 1 && xDensity > 0 && yDensity > 0) {
-          return Math.min(xDensity, yDensity); // DPI
-        }
-        if (units === 2 && xDensity > 0 && yDensity > 0) {
-          return Math.min(Math.round(xDensity * 2.54), Math.round(yDensity * 2.54)); // dots/cm → DPI
-        }
-      }
-
-      // EXIF APP1
-      if (marker === 0xFFE1) {
-        const exifStart = offset + 4;
-        // Check "Exif\0\0"
-        if (
-          view.getUint8(exifStart) === 0x45 && view.getUint8(exifStart + 1) === 0x78 &&
-          view.getUint8(exifStart + 2) === 0x69 && view.getUint8(exifStart + 3) === 0x66
-        ) {
-          const tiffStart = exifStart + 6;
-          const isLE = view.getUint16(tiffStart) === 0x4949;
-          const getU16 = (o: number) => view.getUint16(o, isLE);
-          const getU32 = (o: number) => view.getUint32(o, isLE);
-
-          try {
-            const ifdOffset = getU32(tiffStart + 4);
-            const ifdStart = tiffStart + ifdOffset;
-            const entries = getU16(ifdStart);
-            let xRes: number | null = null;
-            let yRes: number | null = null;
-            let resUnit = 2; // default inches
-
-            for (let i = 0; i < entries; i++) {
-              const entryOff = ifdStart + 2 + i * 12;
-              if (entryOff + 12 > view.byteLength) break;
-              const tag = getU16(entryOff);
-              const type = getU16(entryOff + 2);
-
-              if (tag === 0x011A && type === 5) { // XResolution RATIONAL
-                const valOff = tiffStart + getU32(entryOff + 8);
-                if (valOff + 8 <= view.byteLength) {
-                  xRes = getU32(valOff) / getU32(valOff + 4);
-                }
-              }
-              if (tag === 0x011B && type === 5) { // YResolution RATIONAL
-                const valOff = tiffStart + getU32(entryOff + 8);
-                if (valOff + 8 <= view.byteLength) {
-                  yRes = getU32(valOff) / getU32(valOff + 4);
-                }
-              }
-              if (tag === 0x0128) { // ResolutionUnit
-                resUnit = getU32(entryOff + 8);
-              }
-            }
-
-            if (xRes != null && yRes != null && xRes > 0 && yRes > 0) {
-              let dpi = Math.min(xRes, yRes);
-              if (resUnit === 3) dpi = Math.round(dpi * 2.54); // cm → inches
-              return dpi;
-            }
-          } catch {
-            // EXIF parse failed – fall through
-          }
-        }
-      }
-
-      offset += 2 + segLen;
-    }
-    return null;
-  };
-
   const handleCoverImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -344,7 +257,6 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
     const fileSize = file.size;
     let width = 0;
     let height = 0;
-    let dpi: number | null = null;
 
     // File type check
     if (!["image/jpeg", "image/png"].includes(file.type)) {
@@ -356,33 +268,22 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
       errors.push(`File size ${(fileSize / (1024 * 1024)).toFixed(1)}MB exceeds the ${MAX_FILE_SIZE_MB}MB limit.`);
     }
 
-    // Dimension & DPI check (only if file type is valid image)
+    // Minimum pixel dimensions on each axis — orientation-independent, so
+    // landscape images that meet the minimum on both axes are accepted.
     if (["image/jpeg", "image/png"].includes(file.type)) {
       try {
         const dims = await validateImageDimensions(file);
         width = dims.width;
         height = dims.height;
+        if (width < MIN_DIMENSION || height < MIN_DIMENSION) {
+          errors.push(`Image dimensions are ${width}×${height}px, which is below the minimum ${MIN_DIMENSION}×${MIN_DIMENSION}px required.`);
+        }
       } catch {
         errors.push("Could not read image dimensions. The file may be corrupted.");
       }
-
-      // DPI check (JPEG only — PNG DPI parsing left to API)
-      if (file.type === "image/jpeg") {
-        try {
-          const buffer = await file.arrayBuffer();
-          dpi = extractJpegDpi(buffer);
-          if (dpi === null) {
-            errors.push(`Could not read DPI metadata from the image. Please ensure the file has DPI information embedded (minimum ${MIN_DPI} DPI).`);
-          } else if (dpi < MIN_DPI) {
-            errors.push(`Image resolution is ${dpi} DPI, which is below the minimum ${MIN_DPI} DPI required.`);
-          }
-        } catch {
-          errors.push("Could not read DPI metadata from the image.");
-        }
-      }
     }
 
-    setCoverImageValidation({ fileName, fileSize, width, height, dpi, errors, isValid: errors.length === 0 });
+    setCoverImageValidation({ fileName, fileSize, width, height, errors, isValid: errors.length === 0 });
 
     if (errors.length > 0) {
       setCoverImageFile(null);
@@ -681,7 +582,7 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {[
                     { label: "File type", value: "JPG or PNG" },
-                    { label: "Minimum resolution", value: `${MIN_DPI} × ${MIN_DPI} dpi` },
+                    { label: "Minimum dimensions", value: `${MIN_DIMENSION} × ${MIN_DIMENSION}px and up` },
                     { label: "Maximum file size", value: `${MAX_FILE_SIZE_MB} MB` },
                   ].map((req) => (
                     <div key={req.label} className="flex items-center gap-1.5 rounded-md bg-muted/30 px-3 py-2 border border-border">
@@ -702,17 +603,12 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
                   <div>
                     <p className="font-medium text-foreground">If your image is rejected</p>
                     <p>
-                      If your image does not meet the required specifications, the reason will be displayed in red below. In this case, you may use one of the tools below to resize or compress your image before resubmitting:
+                      If your image does not meet the required specifications, the reason will be displayed in red below. In this case, you may use the tool below to resize your image before resubmitting:
                     </p>
                     <ul className="list-disc list-inside mt-1 space-y-0.5">
                       <li>
                         <a href="https://imageresizer.com/" target="_blank" rel="noopener noreferrer" className="text-primary underline-offset-2 hover:underline">
                           Resize your image
-                        </a>
-                      </li>
-                      <li>
-                        <a href="https://convert.town/image-dpi" target="_blank" rel="noopener noreferrer" className="text-primary underline-offset-2 hover:underline">
-                          Compress your image
                         </a>
                       </li>
                     </ul>
@@ -802,11 +698,6 @@ const AuthorPublicationMetadata: React.FC<AuthorPublicationMetadataProps> = ({
                               <p>Dimensions: <span className={`font-medium ${(coverImageValidation.width < MIN_DIMENSION || coverImageValidation.height < MIN_DIMENSION) ? 'text-destructive' : 'text-foreground'}`}>
                                 {coverImageValidation.width}×{coverImageValidation.height}px
                               </span> <span className="text-muted-foreground/60">(min {MIN_DIMENSION}×{MIN_DIMENSION}px)</span></p>
-                            )}
-                            {coverImageValidation.dpi !== undefined && (
-                              <p>DPI: <span className={`font-medium ${coverImageValidation.dpi === null || coverImageValidation.dpi < MIN_DPI ? 'text-destructive' : 'text-foreground'}`}>
-                                {coverImageValidation.dpi === null ? 'Not found' : coverImageValidation.dpi}
-                              </span> <span className="text-muted-foreground/60">(min {MIN_DPI} DPI)</span></p>
                             )}
                           </div>
                           {coverImageValidation.errors.length > 0 && (
