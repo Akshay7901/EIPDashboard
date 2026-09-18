@@ -21,6 +21,7 @@ type ProviderStatus = "pending" | "running" | "completed" | "failed";
 interface ProviderReview {
   status?: ProviderStatus;
   final_score?: number | null;
+  hallucination_score?: number | null;
   report_url?: string | null;
   triggered_at?: string | null;
   completed_at?: string | null;
@@ -53,6 +54,7 @@ const formatDate = (iso?: string | null) => {
 const normalizeProvider = (raw: any): ProviderReview => ({
   status: raw?.status,
   final_score: raw?.final_score ?? null,
+  hallucination_score: raw?.hallucination_score ?? null,
   report_url: raw?.report_url ?? null,
   triggered_at: raw?.triggered_at ?? null,
   completed_at: raw?.completed_at ?? null,
@@ -184,7 +186,7 @@ const AiReviewPanel: React.FC<Props> = ({ ticketNumber }) => {
     }
   };
 
-  const renderScore = (p: ProviderReview, label: string) => {
+  const renderScore = (p: ProviderReview, field: "final_score" | "hallucination_score" = "final_score") => {
     if (p.status === "failed") {
       return (
         <span className="text-sm font-medium text-muted-foreground italic">Failed</span>
@@ -198,10 +200,9 @@ const AiReviewPanel: React.FC<Props> = ({ ticketNumber }) => {
         </span>
       );
     }
-    if (p.status === "completed" && typeof p.final_score === "number") {
-      return (
-        <span className="text-sm font-semibold">{p.final_score.toFixed(1)}</span>
-      );
+    const value = p[field];
+    if (p.status === "completed" && typeof value === "number") {
+      return <span className="text-sm font-semibold">{value.toFixed(1)}</span>;
     }
     return <span className="text-sm font-medium text-muted-foreground">—</span>;
   };
@@ -233,12 +234,29 @@ const AiReviewPanel: React.FC<Props> = ({ ticketNumber }) => {
                         className="gap-1.5 px-2.5 py-1 text-sm"
                       >
                         <span className="font-medium">{label}:</span>
-                        {renderScore(p, label)}
+                        {renderScore(p, "final_score")}
                         {isBusyStatus(p.status) && (
                           <span className="text-[10px] uppercase tracking-wide text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
                             generating…
                           </span>
                         )}
+                      </Badge>
+                    );
+                  })}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {PROVIDERS.map(({ key, label }) => {
+                    const p = data[key];
+                    if (p.status !== "completed" && !isBusyStatus(p.status)) return null;
+                    return (
+                      <Badge
+                        key={key}
+                        variant="outline"
+                        className="gap-1.5 px-2.5 py-1 text-sm"
+                      >
+                        <span className="font-medium">{label} Hallucination:</span>
+                        {renderScore(p, "hallucination_score")}
                       </Badge>
                     );
                   })}
