@@ -226,48 +226,54 @@ const AiReviewPanel: React.FC<Props> = ({ ticketNumber }) => {
           <>
             {anyStarted && (
               <div className="space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  {PROVIDERS.map(({ key, label }) => {
+                    const p = data[key];
+                    return (
+                      <Badge
+                        key={key}
+                        variant="outline"
+                        className="gap-1.5 px-2.5 py-1 text-sm"
+                      >
+                        <span className="font-medium">{label}:</span>
+                        {renderScore(p, "final_score")}
+                        {isBusyStatus(p.status) && (
+                          <span className="text-[10px] uppercase tracking-wide text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                            generating…
+                          </span>
+                        )}
+                      </Badge>
+                    );
+                  })}
+                </div>
+
                 <TooltipProvider>
                   <div className="flex flex-wrap gap-2">
                     {PROVIDERS.map(({ key, label }) => {
                       const p = data[key];
+                      if (p.status !== "completed" && !isBusyStatus(p.status)) return null;
                       const scoreInfo =
                         typeof p.hallucination_score === "number"
                           ? getHallucinationScoreInfo(p.hallucination_score)
                           : null;
-                      const showHallucination = p.status === "completed" || isBusyStatus(p.status);
                       return (
-                        <Badge
-                          key={key}
-                          variant="outline"
-                          className="gap-1.5 px-2.5 py-1 text-sm"
-                        >
-                          <span className="font-medium">{label}:</span>
-                          {renderScore(p, "final_score")}
-                          {isBusyStatus(p.status) && (
-                            <span className="text-[10px] uppercase tracking-wide text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-                              generating…
-                            </span>
-                          )}
-                          {showHallucination && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="flex items-center gap-1 border-l pl-1.5 ml-0.5">
-                                  <span className="font-medium">Hallucination:</span>
-                                  {renderScore(p, "hallucination_score")}
-                                  {scoreInfo && (
-                                    <span className="text-xs font-medium text-foreground">
-                                      ({scoreInfo.label})
-                                    </span>
-                                  )}
+                        <Tooltip key={key}>
+                          <TooltipTrigger asChild>
+                            <Badge variant="outline" className="gap-1.5 px-2.5 py-1 text-sm">
+                              <span className="font-medium">{label} Hallucination:</span>
+                              {renderScore(p, "hallucination_score")}
+                              {scoreInfo && (
+                                <span className="text-xs font-medium text-foreground">
+                                  ({scoreInfo.label})
                                 </span>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-xs">
-                                {scoreInfo && <p className="font-medium">{scoreInfo.label}</p>}
-                                <p>{HALLUCINATION_SCORE_DESCRIPTION}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-                        </Badge>
+                              )}
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            {scoreInfo && <p className="font-medium">{scoreInfo.label}</p>}
+                            <p>{HALLUCINATION_SCORE_DESCRIPTION}</p>
+                          </TooltipContent>
+                        </Tooltip>
                       );
                     })}
                   </div>
