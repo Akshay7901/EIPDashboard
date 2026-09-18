@@ -265,7 +265,10 @@ const AiReviewPanel: React.FC<Props> = ({ ticketNumber }) => {
                   <div className="flex flex-wrap gap-2">
                     {PROVIDERS.map(({ key, label }) => {
                       const p = data[key];
-                      if (p.status !== "completed" || typeof p.hallucination_score !== "number") return null;
+                      const showHallucination =
+                        isBusyStatus(p.status) ||
+                        (p.status === "completed" && typeof p.hallucination_score === "number");
+                      if (!showHallucination) return null;
                       const scoreInfo =
                         typeof p.hallucination_score === "number"
                           ? getHallucinationScoreInfo(p.hallucination_score)
@@ -279,6 +282,11 @@ const AiReviewPanel: React.FC<Props> = ({ ticketNumber }) => {
                               {scoreInfo && (
                                 <span className="text-xs font-medium text-foreground">
                                   ({scoreInfo.label})
+                                </span>
+                              )}
+                              {isBusyStatus(p.status) && (
+                                <span className="text-[10px] uppercase tracking-wide text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                                  generating…
                                 </span>
                               )}
                             </Badge>
