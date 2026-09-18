@@ -264,6 +264,11 @@ const AiReviewPanel: React.FC<Props> = ({ ticketNumber }) => {
                             <Badge variant="outline" className="gap-1.5 px-2.5 py-1 text-sm">
                               <span className="font-medium">{label} Hallucination:</span>
                               {renderScore(p, "hallucination_score")}
+                              {scoreInfo && (
+                                <span className={cn("text-xs font-medium", scoreInfo.className)}>
+                                  ({scoreInfo.label})
+                                </span>
+                              )}
                             </Badge>
                           </TooltipTrigger>
                           <TooltipContent className="max-w-xs">
