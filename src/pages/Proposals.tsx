@@ -492,13 +492,13 @@ const Proposals: React.FC = () => {
                 <Table className="table-fixed w-full min-w-[900px]">
                   <TableHeader>
                     <TableRow className="bg-muted/30">
-                      <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide w-[24%]">
+                      <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide w-[22%]">
                         Title
                       </TableHead>
-                      <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide w-[14%]">
+                      <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide w-[13%]">
                         Author
                       </TableHead>
-                      <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide w-[16%]">
+                      <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide w-[15%]">
                         Email
                       </TableHead>
                       <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide w-[8%]">
@@ -528,12 +528,12 @@ const Proposals: React.FC = () => {
                         </TableHead>
                       )}
                       {isAdmin && (
-                        <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide text-center w-[8%]">
-                          Hallucination Score
+                        <TableHead className="h-auto py-3 font-semibold text-foreground uppercase text-xs tracking-wide text-center leading-tight w-[11%]">
+                          Hallucination<br />Score
                         </TableHead>
                       )}
                       {isAdmin && (
-                        <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide text-right w-[6%]">
+                        <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide text-right w-[6%] pl-6">
                           Actions
                         </TableHead>
                       )}
