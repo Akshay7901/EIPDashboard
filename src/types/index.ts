@@ -197,6 +197,8 @@ export interface Proposal {
   cover_status?: string | null;
   // AI review score from API (e.g. 7.4)
   ai_review_score?: number | null;
+  // AI hallucination score from API (e.g. 2.1)
+  hallucination_score?: number | null;
   // Legacy compatibility
   client?: string;
   clientEmail?: string;

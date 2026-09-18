@@ -68,6 +68,7 @@ const mapApiProposal = (apiProposal: any): Proposal => {
     metadata_status: apiProposal.metadata_status ?? apiProposal.current_data?.metadata_status ?? null,
     cover_status: apiProposal.cover_status ?? null,
     ai_review_score: apiProposal.ai_review_score ?? apiProposal.ai_review?.final_score ?? null,
+    hallucination_score: apiProposal.hallucination_score ?? apiProposal.ai_review?.hallucination_score ?? null,
   };
 };
 

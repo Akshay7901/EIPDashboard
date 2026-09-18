@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Loader2, Users, ArrowUpDown, Trash2, Sparkles } from "lucide-react";
+import { Search, Loader2, Users, ArrowUpDown, Trash2, Sparkles, AlertTriangle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   AlertDialog,
@@ -492,13 +492,13 @@ const Proposals: React.FC = () => {
                 <Table className="table-fixed w-full min-w-[900px]">
                   <TableHeader>
                     <TableRow className="bg-muted/30">
-                      <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide w-[30%]">
+                      <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide w-[24%]">
                         Title
                       </TableHead>
                       <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide w-[14%]">
                         Author
                       </TableHead>
-                      <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide w-[18%]">
+                      <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide w-[16%]">
                         Email
                       </TableHead>
                       <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide w-[8%]">
@@ -525,6 +525,11 @@ const Proposals: React.FC = () => {
                       {isAdmin && (
                         <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide text-center w-[8%]">
                           AI Score
+                        </TableHead>
+                      )}
+                      {isAdmin && (
+                        <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide text-center w-[8%]">
+                          Hallucination Score
                         </TableHead>
                       )}
                       {isAdmin && (
@@ -610,6 +615,25 @@ const Proposals: React.FC = () => {
                                     </div>
                                   </TooltipTrigger>
                                   <TooltipContent><p>AI review score</p></TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                        )}
+                        {isAdmin && (
+                          <TableCell className="text-center">
+                            {typeof proposal.hallucination_score === 'number' ? (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="inline-flex items-center gap-1 text-sm font-medium text-foreground">
+                                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                                      {proposal.hallucination_score.toFixed(1)}
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent><p>AI hallucination score</p></TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
                             ) : (
