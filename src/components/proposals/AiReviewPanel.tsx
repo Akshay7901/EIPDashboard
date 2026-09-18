@@ -13,8 +13,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/lib/api";
+import { cn } from "@/lib/utils";
+import { getHallucinationScoreInfo, HALLUCINATION_SCORE_DESCRIPTION } from "@/lib/hallucinationScore";
 
 type ProviderStatus = "pending" | "running" | "completed" | "failed";
 
@@ -202,7 +205,8 @@ const AiReviewPanel: React.FC<Props> = ({ ticketNumber }) => {
     }
     const value = p[field];
     if (p.status === "completed" && typeof value === "number") {
-      return <span className="text-sm font-semibold">{value.toFixed(1)}</span>;
+      const colorClass = field === "hallucination_score" ? getHallucinationScoreInfo(value).className : "";
+      return <span className={cn("text-sm font-semibold", colorClass)}>{value.toFixed(1)}</span>;
     }
     return <span className="text-sm font-medium text-muted-foreground">—</span>;
   };
@@ -245,22 +249,32 @@ const AiReviewPanel: React.FC<Props> = ({ ticketNumber }) => {
                   })}
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {PROVIDERS.map(({ key, label }) => {
-                    const p = data[key];
-                    if (p.status !== "completed" && !isBusyStatus(p.status)) return null;
-                    return (
-                      <Badge
-                        key={key}
-                        variant="outline"
-                        className="gap-1.5 px-2.5 py-1 text-sm"
-                      >
-                        <span className="font-medium">{label} Hallucination:</span>
-                        {renderScore(p, "hallucination_score")}
-                      </Badge>
-                    );
-                  })}
-                </div>
+                <TooltipProvider>
+                  <div className="flex flex-wrap gap-2">
+                    {PROVIDERS.map(({ key, label }) => {
+                      const p = data[key];
+                      if (p.status !== "completed" && !isBusyStatus(p.status)) return null;
+                      const scoreInfo =
+                        typeof p.hallucination_score === "number"
+                          ? getHallucinationScoreInfo(p.hallucination_score)
+                          : null;
+                      return (
+                        <Tooltip key={key}>
+                          <TooltipTrigger asChild>
+                            <Badge variant="outline" className="gap-1.5 px-2.5 py-1 text-sm">
+                              <span className="font-medium">{label} Hallucination:</span>
+                              {renderScore(p, "hallucination_score")}
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            {scoreInfo && <p className="font-medium">{scoreInfo.label}</p>}
+                            <p>{HALLUCINATION_SCORE_DESCRIPTION}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                </TooltipProvider>
 
                 <div className="flex flex-wrap gap-2">
                   {PROVIDERS.map(({ key, label }) => {

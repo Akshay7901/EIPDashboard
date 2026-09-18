@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.jpg";
 import brandLogo from "@/assets/brand-logo.webp";
 import { extractCountry } from "@/lib/extractCountry";
+import { getHallucinationScoreInfo, HALLUCINATION_SCORE_DESCRIPTION } from "@/lib/hallucinationScore";
 import ProposalStatusBadge from "@/components/proposals/ProposalStatusBadge";
 import { useQuery } from "@tanstack/react-query";
 import { metadataApi } from "@/lib/proposalsApi";
@@ -628,11 +629,21 @@ const Proposals: React.FC = () => {
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <div className="inline-flex items-center gap-1 text-sm font-medium text-foreground">
+                                    <div
+                                      className={cn(
+                                        'inline-flex items-center gap-1 text-sm font-semibold',
+                                        getHallucinationScoreInfo(proposal.hallucination_score).className,
+                                      )}
+                                    >
                                       {proposal.hallucination_score.toFixed(1)}
                                     </div>
                                   </TooltipTrigger>
-                                  <TooltipContent><p>AI hallucination score</p></TooltipContent>
+                                  <TooltipContent className="max-w-xs">
+                                    <p className="font-medium">
+                                      {getHallucinationScoreInfo(proposal.hallucination_score).label}
+                                    </p>
+                                    <p>{HALLUCINATION_SCORE_DESCRIPTION}</p>
+                                  </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
                             ) : (
