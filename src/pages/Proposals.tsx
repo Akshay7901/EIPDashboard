@@ -492,7 +492,7 @@ const Proposals: React.FC = () => {
                 <Table className="table-fixed w-full min-w-[900px]">
                   <TableHeader>
                     <TableRow className="bg-muted/30">
-                      <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide w-[22%]">
+                      <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide w-[20%]">
                         Title
                       </TableHead>
                       <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide w-[13%]">
@@ -533,7 +533,7 @@ const Proposals: React.FC = () => {
                         </TableHead>
                       )}
                       {isAdmin && (
-                        <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide text-right w-[6%] pl-6">
+                        <TableHead className="font-semibold text-foreground uppercase text-xs tracking-wide text-right whitespace-nowrap w-[8%]">
                           Actions
                         </TableHead>
                       )}
