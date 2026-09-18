@@ -251,7 +251,7 @@ const AiReviewPanel: React.FC<Props> = ({ ticketNumber }) => {
                   <div className="flex flex-wrap gap-2">
                     {PROVIDERS.map(({ key, label }) => {
                       const p = data[key];
-                      if (p.status !== "completed" && !isBusyStatus(p.status)) return null;
+                      if (p.status !== "completed" || typeof p.hallucination_score !== "number") return null;
                       const scoreInfo =
                         typeof p.hallucination_score === "number"
                           ? getHallucinationScoreInfo(p.hallucination_score)
