@@ -64,7 +64,7 @@ const normalizeProvider = (raw: any): ProviderReview => {
     status,
     final_score: raw?.final_score ?? null,
     hallucination_score: raw?.hallucination_score ?? null,
-    report_url: raw?.report_url ?? null,
+    report_url: raw?.report_url ?? raw?.report_s3_key ?? null,
     triggered_at: raw?.triggered_at ?? null,
     completed_at: raw?.completed_at ?? null,
     error_message: raw?.error_message ?? null,
@@ -140,10 +140,16 @@ const AiReviewPanel: React.FC<Props> = ({ ticketNumber }) => {
     setTriggering(true);
     try {
       await api.post(`/api/proposals/${encodeURIComponent(ticketNumber)}/ai-review`);
-      setData((prev) => ({
-        gemini: { ...prev.gemini, status: "pending" },
-        qwen: { ...prev.qwen, status: "pending" },
-      }));
+      const freshProvider: ProviderReview = {
+        status: "pending",
+        final_score: null,
+        hallucination_score: null,
+        report_url: null,
+        triggered_at: new Date().toISOString(),
+        completed_at: null,
+        error_message: null,
+      };
+      setData({ gemini: freshProvider, qwen: { ...freshProvider } });
       startPolling();
       toast({ title: "AI review started", description: "Analysis is running in the background." });
     } catch (err: any) {
