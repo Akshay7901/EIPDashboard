@@ -53,15 +53,23 @@ const formatDate = (iso?: string | null) => {
   }
 };
 
-const normalizeProvider = (raw: any): ProviderReview => ({
-  status: raw?.status,
-  final_score: raw?.final_score ?? null,
-  hallucination_score: raw?.hallucination_score ?? null,
-  report_url: raw?.report_url ?? null,
-  triggered_at: raw?.triggered_at ?? null,
-  completed_at: raw?.completed_at ?? null,
-  error_message: raw?.error_message ?? null,
-});
+const normalizeProvider = (raw: any): ProviderReview => {
+  let status: ProviderStatus | undefined = raw?.status;
+  // The API sometimes leaves status as "pending"/"running" even after completed_at
+  // is set. Trust completed_at as the source of truth for whether it's actually done.
+  if ((status === "pending" || status === "running") && raw?.completed_at) {
+    status = raw?.error_message ? "failed" : "completed";
+  }
+  return {
+    status,
+    final_score: raw?.final_score ?? null,
+    hallucination_score: raw?.hallucination_score ?? null,
+    report_url: raw?.report_url ?? null,
+    triggered_at: raw?.triggered_at ?? null,
+    completed_at: raw?.completed_at ?? null,
+    error_message: raw?.error_message ?? null,
+  };
+};
 
 const normalize = (raw: any): AiReviewData => ({
   gemini: normalizeProvider(raw?.gemini ?? {}),
