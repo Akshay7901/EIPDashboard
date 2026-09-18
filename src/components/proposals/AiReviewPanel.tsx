@@ -260,7 +260,7 @@ const AiReviewPanel: React.FC<Props> = ({ ticketNumber }) => {
                         <Tooltip key={key}>
                           <TooltipTrigger asChild>
                             <Badge variant="outline" className="gap-1.5 px-2.5 py-1 text-sm">
-                              <span className="font-medium">{label} Hallucination Score:</span>
+                              <span className="font-medium">Hallucination Score:</span>
                               {renderScore(p, "hallucination_score")}
                               {scoreInfo && (
                                 <span className="text-xs font-medium text-foreground">
