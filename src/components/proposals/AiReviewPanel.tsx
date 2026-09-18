@@ -16,7 +16,6 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/lib/api";
-import { cn } from "@/lib/utils";
 import { getHallucinationScoreInfo, HALLUCINATION_SCORE_DESCRIPTION } from "@/lib/hallucinationScore";
 
 type ProviderStatus = "pending" | "running" | "completed" | "failed";
@@ -205,8 +204,7 @@ const AiReviewPanel: React.FC<Props> = ({ ticketNumber }) => {
     }
     const value = p[field];
     if (p.status === "completed" && typeof value === "number") {
-      const colorClass = field === "hallucination_score" ? getHallucinationScoreInfo(value).className : "";
-      return <span className={cn("text-sm font-semibold", colorClass)}>{value.toFixed(1)}</span>;
+      return <span className="text-sm font-semibold">{value.toFixed(1)}</span>;
     }
     return <span className="text-sm font-medium text-muted-foreground">—</span>;
   };
@@ -262,10 +260,10 @@ const AiReviewPanel: React.FC<Props> = ({ ticketNumber }) => {
                         <Tooltip key={key}>
                           <TooltipTrigger asChild>
                             <Badge variant="outline" className="gap-1.5 px-2.5 py-1 text-sm">
-                              <span className="font-medium">{label} Hallucination:</span>
+                              <span className="font-medium">{label} Hallucination Score:</span>
                               {renderScore(p, "hallucination_score")}
                               {scoreInfo && (
-                                <span className={cn("text-xs font-medium", scoreInfo.className)}>
+                                <span className="text-xs font-medium text-foreground">
                                   ({scoreInfo.label})
                                 </span>
                               )}
