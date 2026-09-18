@@ -629,12 +629,7 @@ const Proposals: React.FC = () => {
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <div
-                                      className={cn(
-                                        'inline-flex items-center gap-1 text-sm font-semibold cursor-default',
-                                        getHallucinationScoreInfo(proposal.hallucination_score).className,
-                                      )}
-                                    >
+                                    <div className="inline-flex items-center gap-1 text-sm font-semibold text-foreground cursor-default">
                                       {proposal.hallucination_score.toFixed(1)}
                                     </div>
                                   </TooltipTrigger>
