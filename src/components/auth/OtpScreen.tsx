@@ -8,11 +8,13 @@ interface OtpScreenProps {
   onVerify: (otp: string) => Promise<void>;
   isLoading: boolean;
   onBack?: () => void;
+  // Fallback for users whose email provider blocks the OTP email
+  onUseTempPassword?: () => void;
 }
 
 const OTP_EXPIRY_SECONDS = 15 * 60; // 15 minutes
 
-const OtpScreen: React.FC<OtpScreenProps> = ({ email, onVerify, isLoading, onBack }) => {
+const OtpScreen: React.FC<OtpScreenProps> = ({ email, onVerify, isLoading, onBack, onUseTempPassword }) => {
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const [timeLeft, setTimeLeft] = useState(OTP_EXPIRY_SECONDS);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -116,6 +118,20 @@ const OtpScreen: React.FC<OtpScreenProps> = ({ email, onVerify, isLoading, onBac
           'Verify'
         )}
       </Button>
+
+      {onUseTempPassword && (
+        <p className="text-sm text-muted-foreground">
+          Didn't receive the code?{' '}
+          <button
+            type="button"
+            onClick={onUseTempPassword}
+            disabled={isLoading}
+            className="font-medium text-[#3d5a47] hover:text-[#2d4a37] hover:underline transition-colors"
+          >
+            Use a temporary password
+          </button>
+        </p>
+      )}
 
       {onBack && (
         <button

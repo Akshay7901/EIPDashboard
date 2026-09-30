@@ -27,7 +27,7 @@ const passwordSchema = z.object({
 type EmailFormData = z.infer<typeof emailSchema>;
 type PasswordFormData = z.infer<typeof passwordSchema>;
 
-type LoginStep = 'email' | 'password' | 'otp' | 'set-password';
+type LoginStep = 'email' | 'password' | 'otp' | 'temp-password' | 'set-password';
 
 const Login: React.FC = () => {
   const { loginWithToken } = useAuth();
@@ -43,6 +43,10 @@ const Login: React.FC = () => {
   });
 
   const passwordForm = useForm<PasswordFormData>({
+    resolver: zodResolver(passwordSchema),
+  });
+
+  const tempPasswordForm = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema),
   });
 
@@ -127,6 +131,38 @@ const Login: React.FC = () => {
     }
   };
 
+  // First-time login fallback: the admin has set a temporary password because the OTP email never arrived
+  const onTempPasswordSubmit = async (data: PasswordFormData) => {
+    setIsLoading(true);
+    try {
+      const response = await authApi.login(email, data.password);
+
+      if (response.token) {
+        loginWithToken(response.token, response);
+        toast({
+          title: "Welcome!",
+          description: "You're signed in with a temporary password. Please change it from your profile.",
+        });
+        redirectToDashboard(response.user?.role || response.role);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Login failed",
+          description: "This temporary password was not accepted. Please check it with your administrator.",
+        });
+      }
+    } catch (error: any) {
+      const msg = error.response?.data?.error || error.message || "Invalid temporary password. Please try again.";
+      toast({
+        variant: "destructive",
+        title: "Login failed",
+        description: msg,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleOtpVerify = async (otp: string) => {
     setIsLoading(true);
     try {
@@ -180,7 +216,80 @@ const Login: React.FC = () => {
             onVerify={handleOtpVerify} 
             isLoading={isLoading} 
             onBack={() => setStep('email')}
+            onUseTempPassword={() => {
+              tempPasswordForm.reset({ password: '' });
+              setShowPassword(false);
+              setStep('temp-password');
+            }}
           />
+        );
+      case 'temp-password':
+        return (
+          <div className="animate-fade-in">
+            <div className="flex items-center justify-center mb-6">
+              <img src={brandLogo} alt="Ethics Press" className="h-14 w-14 object-contain" />
+            </div>
+
+            <div className="text-center space-y-2 mb-8">
+              <h1 className="text-2xl font-semibold text-foreground">Use temporary password</h1>
+              <p className="text-muted-foreground text-sm">{email}</p>
+              <p className="text-muted-foreground text-xs">
+                Enter the temporary password provided by your administrator.
+              </p>
+            </div>
+
+            <form onSubmit={tempPasswordForm.handleSubmit(onTempPasswordSubmit)} className="space-y-5" autoComplete="off">
+              <div className="space-y-2">
+                <Label htmlFor="temp-password" className="text-foreground font-medium">
+                  Temporary password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="temp-password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter temporary password"
+                    autoComplete="off"
+                    className="h-12 text-base bg-[#f0f4f8] border-0 pr-10 placeholder:text-muted-foreground/60 focus-visible:ring-[#3d5a47]"
+                    {...tempPasswordForm.register("password")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {tempPasswordForm.formState.errors.password && (
+                  <p className="text-sm text-destructive">{tempPasswordForm.formState.errors.password.message}</p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full h-12 text-base font-medium bg-[#3d5a47] hover:bg-[#2d4a37] text-white"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Log in"
+                )}
+              </Button>
+
+              <button
+                type="button"
+                onClick={() => setStep('otp')}
+                className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ← Back to verification code
+              </button>
+            </form>
+          </div>
         );
       case 'set-password':
         return (
