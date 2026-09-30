@@ -67,6 +67,7 @@ const SetPasswordDialog: React.FC<SetPasswordDialogProps> = ({ email, open, onOp
   const [errors, setErrors] = useState<FieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // Reset form whenever the dialog is (re)opened
@@ -77,6 +78,7 @@ const SetPasswordDialog: React.FC<SetPasswordDialogProps> = ({ email, open, onOp
       setErrors({});
       setIsSubmitting(false);
       setShowPassword(false);
+      setShowConfirmPassword(false);
       setCopied(false);
     }
   }, [open]);
@@ -86,6 +88,7 @@ const SetPasswordDialog: React.FC<SetPasswordDialogProps> = ({ email, open, onOp
     setPassword(generated);
     setConfirmPassword(generated);
     setShowPassword(true);
+    setShowConfirmPassword(true);
     setCopied(false);
     setErrors((prev) => ({ ...prev, password: undefined, confirmPassword: undefined }));
   };
@@ -233,18 +236,32 @@ const SetPasswordDialog: React.FC<SetPasswordDialogProps> = ({ email, open, onOp
 
             <div className="space-y-2">
               <Label htmlFor="set-password-confirm">Confirm Password</Label>
-              <Input
-                id="set-password-confirm"
-                type={showPassword ? "text" : "password"}
-                className="font-mono"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                  if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
-                }}
-                aria-invalid={!!errors.confirmPassword}
-              />
+              <div className="relative">
+                <Input
+                  id="set-password-confirm"
+                  type={showConfirmPassword ? "text" : "password"}
+                  className="pr-11 font-mono"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+                  }}
+                  aria-invalid={!!errors.confirmPassword}
+                />
+                <div className="absolute inset-y-0 right-1 flex items-center">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setShowConfirmPassword((v) => !v)}
+                    title={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
               {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
             </div>
           </div>
