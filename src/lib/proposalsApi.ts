@@ -68,6 +68,22 @@ export const designersApi = {
   },
 };
 
+// Admin: set a temporary password for a portal user (fallback when OTP emails are blocked)
+export interface SetPasswordResponse {
+  status: string;
+  message: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+export const userPasswordApi = {
+  setPassword: async (email: string, password: string): Promise<SetPasswordResponse> => {
+    const { data } = await api.post('/api/proposals/users/set-password', { email, password });
+    return data;
+  },
+};
+
 // Reviews API (peer review submission and retrieval)
 export const reviewsApi = {
   get: async (ticketNumber: string): Promise<any> => {

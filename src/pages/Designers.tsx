@@ -34,6 +34,8 @@ import {
 } from "@/components/ui/table";
 import { ChevronLeft, Plus, Loader2 } from "lucide-react";
 import { useDesigners } from "@/hooks/useDesigners";
+import { useAuth } from "@/contexts/AuthContext";
+import SetPasswordDialog from "@/components/admin/SetPasswordDialog";
 
 const Designers: React.FC = () => {
   const navigate = useNavigate();
@@ -46,6 +48,9 @@ const Designers: React.FC = () => {
     null,
   );
   const [formData, setFormData] = useState({ name: "", email: "" });
+  const { isAdmin } = useAuth();
+  const [setPasswordEmail, setSetPasswordEmail] = useState<string | null>(null);
+  const [isSetPasswordOpen, setIsSetPasswordOpen] = useState(false);
 
   const handleAdd = () => {
     if (!formData.name || !formData.email) return;
@@ -154,7 +159,19 @@ const Designers: React.FC = () => {
                       </TableCell>
                       <TableCell className="break-all">{d.email}</TableCell>
                       <TableCell>{formatDate(d.created_at)}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right space-x-2">
+                        {isAdmin && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSetPasswordEmail(d.email);
+                              setIsSetPasswordOpen(true);
+                            }}
+                          >
+                            Set Password
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
@@ -245,6 +262,14 @@ const Designers: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {isAdmin && (
+        <SetPasswordDialog
+          email={setPasswordEmail}
+          open={isSetPasswordOpen}
+          onOpenChange={setIsSetPasswordOpen}
+        />
+      )}
     </DashboardLayout>
   );
 };
