@@ -34,16 +34,11 @@ import { useReviewerAssignments } from "@/hooks/useReviewerAssignments";
 import { assignmentsApi } from "@/lib/proposalsApi";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import SetPasswordDialog from "@/components/admin/SetPasswordDialog";
 
 const PeerReviewers: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { isAdmin } = useAuth();
-  const [setPasswordEmail, setSetPasswordEmail] = useState<string | null>(null);
-  const [isSetPasswordOpen, setIsSetPasswordOpen] = useState(false);
   const { reviewers, isLoading, createReviewer, isCreating, deleteReviewer, isDeleting } = usePeerReviewers();
   const { isDefault, setDefault } = useDefaultReviewer();
   const { data: assignmentMap, isLoading: isLoadingAssignments } = useReviewerAssignments();
@@ -242,18 +237,6 @@ const PeerReviewers: React.FC = () => {
                             Set as default
                           </Button>
                         )}
-                        {isAdmin && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSetPasswordEmail(reviewer.email);
-                              setIsSetPasswordOpen(true);
-                            }}
-                          >
-                            Set Password
-                          </Button>
-                        )}
                         <Button
                           variant="outline"
                           size="sm"
@@ -404,14 +387,6 @@ const PeerReviewers: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {isAdmin && (
-        <SetPasswordDialog
-          email={setPasswordEmail}
-          open={isSetPasswordOpen}
-          onOpenChange={setIsSetPasswordOpen}
-        />
-      )}
     </DashboardLayout>
   );
 };
