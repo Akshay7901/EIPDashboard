@@ -33,7 +33,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, FileText, Download, Eye, BookOpen, User, Folder, UserCircle, ClipboardList, MessageSquare, CheckCircle2, FileCheck, Send, Loader2, History, GitCompareArrows, Lock, StickyNote, Save, Info, Sparkles, Link2 } from "lucide-react";
+import { ArrowLeft, FileText, Download, Eye, BookOpen, User, Folder, UserCircle, ClipboardList, MessageSquare, CheckCircle2, FileCheck, Send, Loader2, History, GitCompareArrows, Lock, StickyNote, Save, Info, Sparkles, Link2, KeyRound } from "lucide-react";
 import { useProposal, useWorkflowLogs, useProposalEvents } from "@/hooks/useProposals";
 import { useReview } from "@/hooks/useReview";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -52,6 +52,7 @@ import AiAssistanceSplitView from "@/components/proposals/AiAssistanceSplitView"
 import AiReviewPanel from "@/components/proposals/AiReviewPanel";
 import ContributorsPanel from "@/components/proposals/ContributorsPanel";
 import CoAuthorsPanel from "@/components/proposals/CoAuthorsPanel";
+import SetPasswordDialog from "@/components/admin/SetPasswordDialog";
 
 /* ---------------- Helpers ---------------- */
 
@@ -166,6 +167,7 @@ const ProposalDetails: React.FC = () => {
     isAnyReviewer,
     isAdmin
   } = useAuth();
+  const [isSetPasswordOpen, setIsSetPasswordOpen] = useState(false);
   const {
     reviewers
   } = usePeerReviewers();
@@ -448,6 +450,7 @@ const ProposalDetails: React.FC = () => {
   /* ======================== RIGHT PANEL CONTENT ======================== */
 
   const isPostSubmission = decisionReviewerPostSubmission;
+  const authorEmail: string | null = proposal.author_email || (proposal as any).email || null;
 
   const rightPanel = <div className="space-y-6">
       {/* Proposal Header */}
@@ -486,6 +489,12 @@ const ProposalDetails: React.FC = () => {
             {isReviewer1 &&
           <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setEventsSheetOpen(true)} title="View Audit Trail">
                 <History className="h-4 w-4" />
+              </Button>
+          }
+            {isAdmin && authorEmail &&
+          <Button variant="outline" size="sm" className="h-9" onClick={() => setIsSetPasswordOpen(true)} title="Set a temporary password for the author">
+                <KeyRound className="h-4 w-4 mr-2" />
+                Set Password
               </Button>
           }
           </div>
@@ -2306,6 +2315,10 @@ const ProposalDetails: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {isAdmin && authorEmail && (
+        <SetPasswordDialog email={authorEmail} open={isSetPasswordOpen} onOpenChange={setIsSetPasswordOpen} />
+      )}
     </DashboardLayout>;
 };
 export default ProposalDetails;
