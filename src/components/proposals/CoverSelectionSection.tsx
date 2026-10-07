@@ -191,8 +191,21 @@ const CoverSelectionSection: React.FC<CoverSelectionSectionProps> = ({ ticketNum
     </div>
   );
 
-  // One AI cover version as a small card; readOnly hides the Select button
+  // One AI cover version as a small card; readOnly shows the image only
   const renderAiCoverCard = (cover: AiCover, readOnly: boolean) => {
+    if (readOnly) {
+      return (
+        <div key={cover.id} className="rounded-md border border-border p-2">
+          {cover.status === "pending" ? (
+            <div className="h-36 rounded bg-muted flex items-center justify-center">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <CoverImage url={cover.image_url} alt="AI generated cover" placeholder="No image" className="h-36" />
+          )}
+        </div>
+      );
+    }
     const isSelected = selectedSource === "ai" && selectedAiId === cover.id;
     return (
       <div
@@ -228,7 +241,7 @@ const CoverSelectionSection: React.FC<CoverSelectionSectionProps> = ({ ticketNum
           <p className="text-xs font-medium text-[#3d5a47] flex items-center gap-1">
             <CheckCircle2 className="h-3 w-3" /> Selected
           </p>
-        ) : !readOnly && isUsable(cover) ? (
+        ) : isUsable(cover) ? (
           <Button
             size="sm"
             variant="outline"
