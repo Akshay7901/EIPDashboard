@@ -259,6 +259,29 @@ const CoverSelectionSection: React.FC<CoverSelectionSectionProps> = ({ ticketNum
   if (designerApproved) {
     return (
       <div className={className}>
+        <div className="flex items-center justify-between gap-3 bg-muted/50 px-4 py-2 border-y border-border">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+            <Sparkles className="h-4 w-4 text-muted-foreground" />
+            AI Generated Covers
+          </h3>
+          <Badge variant="outline" className="bg-muted text-muted-foreground">View only</Badge>
+        </div>
+        <div className="p-4">
+          {aiLoading ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : aiError && aiCovers.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Couldn't load AI covers.</p>
+          ) : aiCovers.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No AI covers have been generated for this proposal.</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {aiCovers.map((cover) => renderAiCoverCard(cover, true))}
+            </div>
+          )}
+        </div>
+
         {header(
           <Badge variant="outline" className="gap-1 bg-emerald-100 text-emerald-800 border-emerald-200">
             <Lock className="h-3 w-3" />
@@ -275,27 +298,6 @@ const CoverSelectionSection: React.FC<CoverSelectionSectionProps> = ({ ticketNum
               The designer cover has been approved and is locked as the production cover.
             </p>
           </div>
-        </div>
-
-        <div className="px-4 pb-4 space-y-3">
-          <p className="text-sm font-semibold text-foreground flex items-center gap-1.5 pt-3 border-t border-border">
-            <Sparkles className="h-4 w-4 text-muted-foreground" />
-            AI Generated
-            <span className="font-normal text-muted-foreground">(view only)</span>
-          </p>
-          {aiLoading ? (
-            <div className="flex justify-center py-6">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : aiError && aiCovers.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Couldn't load AI covers.</p>
-          ) : aiCovers.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No AI covers have been generated for this proposal.</p>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {aiCovers.map((cover) => renderAiCoverCard(cover, true))}
-            </div>
-          )}
         </div>
       </div>
     );
