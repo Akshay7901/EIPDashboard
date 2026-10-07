@@ -21,6 +21,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { metadataApi, metadataQueriesApi, type ProposalMetadata, type MetadataAuthor, type MetadataQuery } from "@/lib/proposalsApi";
 import MetadataQueryDiffPanel from "@/components/proposals/MetadataQueryDiffPanel";
 import DesignerCoversSection from "@/components/proposals/DesignerCoversSection";
+import CoverSelectionSection from "@/components/proposals/CoverSelectionSection";
+import { useAuth } from "@/contexts/AuthContext";
 import type { Proposal } from "@/types";
 import { statusIs } from "@/lib/statusUtils";
 
@@ -139,6 +141,7 @@ const PublicationMetadata = forwardRef<PublicationMetadataRef, PublicationMetada
   ticketNumber,
 }, ref) => {
   const queryClient = useQueryClient();
+  const { isAdmin } = useAuth();
 
   // Fetch metadata from API
   const { data: metadataResponse, isLoading } = useQuery({
@@ -733,6 +736,11 @@ const PublicationMetadata = forwardRef<PublicationMetadataRef, PublicationMetada
 
         {/* Designer Covers Section */}
         <DesignerCoversSection ticketNumber={ticketNumber} metadata={metadataResponse} />
+
+        {/* Final production cover: designer vs AI (locked proposals only) */}
+        {isAdmin && (isLocked || statusIs(proposal.internal_status || "", "locked")) && (
+          <CoverSelectionSection ticketNumber={ticketNumber} metadata={metadataResponse} />
+        )}
 
       </div>
 
