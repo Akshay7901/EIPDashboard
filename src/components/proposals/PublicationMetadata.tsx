@@ -736,7 +736,7 @@ const PublicationMetadata = forwardRef<PublicationMetadataRef, PublicationMetada
         <DesignerCoversSection ticketNumber={ticketNumber} metadata={metadataResponse} />
 
         {/* Final production cover: designer vs AI (locked proposals only) */}
-        {statusIs(proposal.status || "", "locked") && (
+        {(isLocked || statusIs(proposal.internal_status || "", "locked")) && (
           <CoverSelectionSection ticketNumber={ticketNumber} metadata={metadataResponse} />
         )}
 
