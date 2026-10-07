@@ -31,6 +31,7 @@ import {
   type DesignerCoverApprovalStatus,
   type MetadataResponse,
 } from "@/lib/proposalsApi";
+import { getCoverApproval, getDesignerApprovalStatus } from "@/lib/coverUtils";
 
 
 const BINDINGS: DesignerCoverBinding[] = ["hb", "pb", "ebook"];
@@ -163,18 +164,8 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
     }
   };
 
-  const coverApproval: CoverApproval | null =
-    (response as any)?.cover_approval ??
-    (response as any)?.designer_cover_approval ??
-    (response as any)?.approval ??
-    null;
-  const rawStatus = String(
-    coverApproval?.approval_status ?? (response as any)?.approval_status ?? ''
-  ).toLowerCase().replace(/\s+/g, '_');
-  const approvalStatus: DesignerCoverApprovalStatus =
-    rawStatus === 'in_review' || rawStatus === 'query_raised' || rawStatus === 'completed'
-      ? (rawStatus as DesignerCoverApprovalStatus)
-      : 'pending';
+  const coverApproval: CoverApproval | null = getCoverApproval(response);
+  const approvalStatus: DesignerCoverApprovalStatus = getDesignerApprovalStatus(response);
 
   const badge =
     approvalStatus === 'completed'

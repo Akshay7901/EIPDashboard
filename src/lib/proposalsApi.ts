@@ -374,6 +374,91 @@ export const designerCoversApi = {
 };
 
 
+// AI-generated covers (generated asynchronously for locked proposals)
+export type AiCoverStatus = 'pending' | 'completed' | 'approved' | 'rejected';
+
+export interface AiCover {
+  id: number;
+  image_url?: string | null;
+  style_name?: string | null;
+  status: AiCoverStatus | string;
+  version?: number | null;
+  generated_at?: string | null;
+  reference_image_used?: boolean;
+  [key: string]: any;
+}
+
+export interface AiCoverStyle {
+  name: string;
+  description?: string;
+  category?: string;
+}
+
+export const aiCoversApi = {
+  /** Newest first. */
+  list: async (ticketNumber: string): Promise<AiCover[]> => {
+    const { data } = await api.get(`/api/proposals/${encodeURIComponent(ticketNumber)}/ai-covers`);
+    return Array.isArray(data?.covers) ? data.covers : Array.isArray(data) ? data : [];
+  },
+
+  /** Async — returns 202; poll list() until the new cover is no longer pending. */
+  generate: async (ticketNumber: string): Promise<{ cover_id: number; status: string }> => {
+    const { data } = await api.post(`/api/proposals/${encodeURIComponent(ticketNumber)}/ai-covers`);
+    return data;
+  },
+
+  /** Omitting style lets the backend pick one at random. */
+  regenerate: async (ticketNumber: string, coverId: number, style?: string): Promise<{ cover_id: number; status: string }> => {
+    const { data } = await api.post(
+      `/api/proposals/${encodeURIComponent(ticketNumber)}/ai-covers/${coverId}/regenerate`,
+      style ? { style } : {}
+    );
+    return data;
+  },
+
+  review: async (ticketNumber: string, coverId: number, action: 'approve' | 'reject', notes?: string): Promise<any> => {
+    const { data } = await api.patch(
+      `/api/proposals/${encodeURIComponent(ticketNumber)}/ai-covers/${coverId}/review`,
+      notes ? { action, notes } : { action }
+    );
+    return data;
+  },
+
+  styles: async (): Promise<AiCoverStyle[]> => {
+    const { data } = await api.get('/api/ai-covers/styles');
+    return Array.isArray(data?.styles) ? data.styles : [];
+  },
+};
+
+// Admin's choice of final production cover (designer vs AI)
+export type CoverSource = 'designer' | 'ai';
+
+export interface CoverSelection {
+  designer_approved: boolean;
+  designer_cover_url?: string | null;
+  selected_source: CoverSource | null;
+  selected_ai_cover_id: number | null;
+  ai_covers?: AiCover[];
+}
+
+export const coverSelectionApi = {
+  /** Returns null if the endpoint is not available yet (404). */
+  get: async (ticketNumber: string): Promise<CoverSelection | null> => {
+    try {
+      const { data } = await api.get(`/api/proposals/${encodeURIComponent(ticketNumber)}/cover-selection`);
+      return data;
+    } catch (error: any) {
+      if (error?.status === 404 || error?.response?.status === 404) return null;
+      throw error;
+    }
+  },
+
+  save: async (ticketNumber: string, payload: { source: CoverSource; ai_cover_id?: number }): Promise<{ ok: boolean }> => {
+    const { data } = await api.post(`/api/proposals/${encodeURIComponent(ticketNumber)}/cover-selection`, payload);
+    return data;
+  },
+};
+
 export const metadataApi = {
   get: async (ticketNumber: string): Promise<MetadataResponse | null> => {
     try {
