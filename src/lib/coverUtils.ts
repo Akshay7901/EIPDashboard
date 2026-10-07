@@ -30,8 +30,9 @@ export const getDesignerApprovalStatus = (
 const PREVIEW_BINDING_ORDER: DesignerCoverBinding[] = ["ebook", "pb", "hb"];
 
 /** A single designer cover image URL to preview, if any were uploaded. */
-export const getDesignerPreviewUrl = (response: MetadataResponse | null | undefined): string | null => {
-  const covers = response?.designer_covers || {};
+export const getDesignerPreviewUrl = (
+  covers: Partial<Record<DesignerCoverBinding, { url?: string | null }>>
+): string | null => {
   for (const binding of PREVIEW_BINDING_ORDER) {
     const url = covers?.[binding]?.url;
     if (url) return url;

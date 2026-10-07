@@ -24,6 +24,7 @@ import {
   type MetadataResponse,
 } from "@/lib/proposalsApi";
 import { getDesignerApprovalStatus, getDesignerPreviewUrl } from "@/lib/coverUtils";
+import { useDesignerCovers } from "@/hooks/useDesignerCovers";
 
 const AI_POLL_INTERVAL_MS = 5000;
 const RANDOM_STYLE = "__random__";
@@ -90,6 +91,8 @@ const CoverSelectionSection: React.FC<CoverSelectionSectionProps> = ({ ticketNum
   // Remembers a selection saved this session in case GET /cover-selection isn't available
   const [localSelection, setLocalSelection] = useState<{ source: CoverSource; aiCoverId: number | null } | null>(null);
 
+  const { covers: designerCovers } = useDesignerCovers(ticketNumber, metadata);
+
   const { data: selection, isLoading: selectionLoading } = useQuery({
     queryKey: ["cover-selection", ticketNumber],
     queryFn: () => coverSelectionApi.get(ticketNumber),
@@ -99,7 +102,7 @@ const CoverSelectionSection: React.FC<CoverSelectionSectionProps> = ({ ticketNum
 
   // Either source saying "approved" locks the cover; metadata updates first when the admin approves below
   const designerApproved = !!selection?.designer_approved || getDesignerApprovalStatus(metadata) === "completed";
-  const designerUrl = selection?.designer_cover_url || getDesignerPreviewUrl(metadata);
+  const designerUrl = selection?.designer_cover_url || getDesignerPreviewUrl(designerCovers);
 
   const {
     data: fetchedAiCovers,

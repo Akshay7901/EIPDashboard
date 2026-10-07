@@ -32,6 +32,7 @@ import {
   type MetadataResponse,
 } from "@/lib/proposalsApi";
 import { getCoverApproval, getDesignerApprovalStatus } from "@/lib/coverUtils";
+import { useDesignerCovers } from "@/hooks/useDesignerCovers";
 
 
 const BINDINGS: DesignerCoverBinding[] = ["hb", "pb", "ebook"];
@@ -96,11 +97,14 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
   });
 
   const response = metadata ?? fetched;
-  const covers = response?.designer_covers || {};
-  const present = BINDINGS.filter((b) => covers?.[b]?.url);
-  const hasAny = present.length > 0;
+  const { covers, isLoading: coversLoading } = useDesignerCovers(ticketNumber, response);
+  const hasAny = BINDINGS.some((b) => covers[b]?.uploaded);
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ["metadata", ticketNumber] });
+  const refresh = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["metadata", ticketNumber] }),
+      queryClient.invalidateQueries({ queryKey: ["designer-covers", ticketNumber] }),
+    ]);
 
   const handleDownload = async (binding: DesignerCoverBinding) => {
     setDownloading(binding);
@@ -219,7 +223,12 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
           </div>
         )}
 
-        {!hasAny ? (
+        {coversLoading && !hasAny ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading covers…
+          </div>
+        ) : !hasAny ? (
           <div className="flex flex-wrap items-center gap-3">
             <span className="flex items-center gap-2 text-sm text-muted-foreground">
               <ImageIcon className="h-4 w-4" />
@@ -251,14 +260,19 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
                         />
                       </a>
                     ) : (
-                      <div className="w-full h-40 rounded bg-muted flex items-center justify-center text-xs text-muted-foreground">
-                        {BINDING_LABELS[binding]}
+                      <div className="w-full h-40 rounded bg-muted flex flex-col items-center justify-center gap-1 px-2 text-center text-xs text-muted-foreground">
+                        <ImageIcon className="h-4 w-4" />
+                        {cover?.uploaded ? (
+                          <span className="break-all">{cover.filename || "Uploaded — preview unavailable"}</span>
+                        ) : (
+                          "Not uploaded"
+                        )}
                       </div>
                     )}
                     <p className="text-xs text-muted-foreground">
                       {cover?.uploaded_at ? formatDate(cover.uploaded_at) : "—"}
                     </p>
-                    {cover?.url && (
+                    {cover?.uploaded && (
                       <Button
                         size="sm"
                         variant="outline"
