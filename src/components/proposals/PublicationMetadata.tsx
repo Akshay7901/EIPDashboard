@@ -21,7 +21,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { metadataApi, metadataQueriesApi, type ProposalMetadata, type MetadataAuthor, type MetadataQuery } from "@/lib/proposalsApi";
 import MetadataQueryDiffPanel from "@/components/proposals/MetadataQueryDiffPanel";
 import DesignerCoversSection from "@/components/proposals/DesignerCoversSection";
-import CoverSelectionSection from "@/components/proposals/CoverSelectionSection";
 import type { Proposal } from "@/types";
 import { statusIs } from "@/lib/statusUtils";
 
@@ -734,11 +733,6 @@ const PublicationMetadata = forwardRef<PublicationMetadataRef, PublicationMetada
 
         {/* Designer Covers Section */}
         <DesignerCoversSection ticketNumber={ticketNumber} metadata={metadataResponse} />
-
-        {/* Final production cover: designer vs AI (locked proposals only) */}
-        {(isLocked || statusIs(proposal.internal_status || "", "locked")) && (
-          <CoverSelectionSection ticketNumber={ticketNumber} metadata={metadataResponse} />
-        )}
 
       </div>
 

@@ -31,8 +31,6 @@ import {
   type DesignerCoverApprovalStatus,
   type MetadataResponse,
 } from "@/lib/proposalsApi";
-import { getCoverApproval, getDesignerApprovalStatus } from "@/lib/coverUtils";
-import { useDesignerCovers } from "@/hooks/useDesignerCovers";
 
 
 const BINDINGS: DesignerCoverBinding[] = ["hb", "pb", "ebook"];
@@ -97,14 +95,11 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
   });
 
   const response = metadata ?? fetched;
-  const { covers, isLoading: coversLoading } = useDesignerCovers(ticketNumber, response);
-  const hasAny = BINDINGS.some((b) => covers[b]?.uploaded);
+  const covers = response?.designer_covers || {};
+  const present = BINDINGS.filter((b) => covers?.[b]?.url);
+  const hasAny = present.length > 0;
 
-  const refresh = () =>
-    Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["metadata", ticketNumber] }),
-      queryClient.invalidateQueries({ queryKey: ["designer-covers", ticketNumber] }),
-    ]);
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ["metadata", ticketNumber] });
 
   const handleDownload = async (binding: DesignerCoverBinding) => {
     setDownloading(binding);
@@ -168,8 +163,18 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
     }
   };
 
-  const coverApproval: CoverApproval | null = getCoverApproval(response);
-  const approvalStatus: DesignerCoverApprovalStatus = getDesignerApprovalStatus(response);
+  const coverApproval: CoverApproval | null =
+    (response as any)?.cover_approval ??
+    (response as any)?.designer_cover_approval ??
+    (response as any)?.approval ??
+    null;
+  const rawStatus = String(
+    coverApproval?.approval_status ?? (response as any)?.approval_status ?? ''
+  ).toLowerCase().replace(/\s+/g, '_');
+  const approvalStatus: DesignerCoverApprovalStatus =
+    rawStatus === 'in_review' || rawStatus === 'query_raised' || rawStatus === 'completed'
+      ? (rawStatus as DesignerCoverApprovalStatus)
+      : 'pending';
 
   const badge =
     approvalStatus === 'completed'
@@ -223,12 +228,7 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
           </div>
         )}
 
-        {coversLoading && !hasAny ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Loading covers…
-          </div>
-        ) : !hasAny ? (
+        {!hasAny ? (
           <div className="flex flex-wrap items-center gap-3">
             <span className="flex items-center gap-2 text-sm text-muted-foreground">
               <ImageIcon className="h-4 w-4" />
@@ -260,19 +260,14 @@ const DesignerCoversSection: React.FC<DesignerCoversSectionProps> = ({
                         />
                       </a>
                     ) : (
-                      <div className="w-full h-40 rounded bg-muted flex flex-col items-center justify-center gap-1 px-2 text-center text-xs text-muted-foreground">
-                        <ImageIcon className="h-4 w-4" />
-                        {cover?.uploaded ? (
-                          <span className="break-all">{cover.filename || "Uploaded — preview unavailable"}</span>
-                        ) : (
-                          "Not uploaded"
-                        )}
+                      <div className="w-full h-40 rounded bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                        {BINDING_LABELS[binding]}
                       </div>
                     )}
                     <p className="text-xs text-muted-foreground">
                       {cover?.uploaded_at ? formatDate(cover.uploaded_at) : "—"}
                     </p>
-                    {cover?.uploaded && (
+                    {cover?.url && (
                       <Button
                         size="sm"
                         variant="outline"
