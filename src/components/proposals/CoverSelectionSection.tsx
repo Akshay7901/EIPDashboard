@@ -108,7 +108,7 @@ const CoverSelectionSection: React.FC<CoverSelectionSectionProps> = ({ ticketNum
   } = useQuery({
     queryKey: ["ai-covers", ticketNumber],
     queryFn: () => aiCoversApi.list(ticketNumber),
-    enabled: !!ticketNumber && !selectionLoading && !designerApproved,
+    enabled: !!ticketNumber && !selectionLoading,
     // Keep polling while the newest cover is still being generated
     refetchInterval: (query) => (query.state.data?.[0]?.status === "pending" ? AI_POLL_INTERVAL_MS : false),
   });
@@ -191,6 +191,59 @@ const CoverSelectionSection: React.FC<CoverSelectionSectionProps> = ({ ticketNum
     </div>
   );
 
+  // One AI cover version as a small card; readOnly hides the Select button
+  const renderAiCoverCard = (cover: AiCover, readOnly: boolean) => {
+    const isSelected = selectedSource === "ai" && selectedAiId === cover.id;
+    return (
+      <div
+        key={cover.id}
+        className={cn(
+          "rounded-md border p-2 space-y-2",
+          isSelected ? "border-[#3d5a47] ring-1 ring-[#3d5a47]/30" : "border-border"
+        )}
+      >
+        {cover.status === "pending" ? (
+          <div className="h-36 rounded bg-muted flex items-center justify-center">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <CoverImage url={cover.image_url} alt={`AI cover v${cover.version ?? ""}`} placeholder="No image" className="h-36" />
+        )}
+        <div className="flex flex-wrap items-center gap-1">
+          {cover.version != null && <Badge variant="secondary" className="text-[10px]">v{cover.version}</Badge>}
+          <Badge variant="outline" className={cn("text-[10px] capitalize", STATUS_BADGE[cover.status] ?? "")}>
+            {cover.status}
+          </Badge>
+          {cover.reference_image_used && (
+            <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-800 border-amber-200">
+              Author image
+            </Badge>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground truncate" title={cover.style_name ?? undefined}>
+          {cover.style_name || "—"}
+          {cover.generated_at ? ` · ${formatDate(cover.generated_at)}` : ""}
+        </p>
+        {isSelected ? (
+          <p className="text-xs font-medium text-[#3d5a47] flex items-center gap-1">
+            <CheckCircle2 className="h-3 w-3" /> Selected
+          </p>
+        ) : !readOnly && isUsable(cover) ? (
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full h-7 text-xs"
+            disabled={busy}
+            onClick={() => handleSelect("ai", cover)}
+          >
+            {savingKey === `ai-${cover.id}` && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+            Select
+          </Button>
+        ) : null}
+      </div>
+    );
+  };
+
   if (selectionLoading) {
     return (
       <div className={className}>
@@ -202,7 +255,7 @@ const CoverSelectionSection: React.FC<CoverSelectionSectionProps> = ({ ticketNum
     );
   }
 
-  /* ---------- Designer cover approved: locked, no AI options ---------- */
+  /* ---------- Designer cover approved: locked; AI covers shown view-only ---------- */
   if (designerApproved) {
     return (
       <div className={className}>
@@ -222,6 +275,27 @@ const CoverSelectionSection: React.FC<CoverSelectionSectionProps> = ({ ticketNum
               The designer cover has been approved and is locked as the production cover.
             </p>
           </div>
+        </div>
+
+        <div className="px-4 pb-4 space-y-3">
+          <p className="text-sm font-semibold text-foreground flex items-center gap-1.5 pt-3 border-t border-border">
+            <Sparkles className="h-4 w-4 text-muted-foreground" />
+            AI Generated
+            <span className="font-normal text-muted-foreground">(view only)</span>
+          </p>
+          {aiLoading ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : aiError && aiCovers.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Couldn't load AI covers.</p>
+          ) : aiCovers.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No AI covers have been generated for this proposal.</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {aiCovers.map((cover) => renderAiCoverCard(cover, true))}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -392,57 +466,7 @@ const CoverSelectionSection: React.FC<CoverSelectionSectionProps> = ({ ticketNum
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {aiCovers.map((cover) => {
-                  const isSelected = selectedSource === "ai" && selectedAiId === cover.id;
-                  return (
-                    <div
-                      key={cover.id}
-                      className={cn(
-                        "rounded-md border p-2 space-y-2",
-                        isSelected ? "border-[#3d5a47] ring-1 ring-[#3d5a47]/30" : "border-border"
-                      )}
-                    >
-                      {cover.status === "pending" ? (
-                        <div className="h-36 rounded bg-muted flex items-center justify-center">
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        </div>
-                      ) : (
-                        <CoverImage url={cover.image_url} alt={`AI cover v${cover.version ?? ""}`} placeholder="No image" className="h-36" />
-                      )}
-                      <div className="flex flex-wrap items-center gap-1">
-                        {cover.version != null && <Badge variant="secondary" className="text-[10px]">v{cover.version}</Badge>}
-                        <Badge variant="outline" className={cn("text-[10px] capitalize", STATUS_BADGE[cover.status] ?? "")}>
-                          {cover.status}
-                        </Badge>
-                        {cover.reference_image_used && (
-                          <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-800 border-amber-200">
-                            Author image
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate" title={cover.style_name ?? undefined}>
-                        {cover.style_name || "—"}
-                        {cover.generated_at ? ` · ${formatDate(cover.generated_at)}` : ""}
-                      </p>
-                      {isSelected ? (
-                        <p className="text-xs font-medium text-[#3d5a47] flex items-center gap-1">
-                          <CheckCircle2 className="h-3 w-3" /> Selected
-                        </p>
-                      ) : isUsable(cover) ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="w-full h-7 text-xs"
-                          disabled={busy}
-                          onClick={() => handleSelect("ai", cover)}
-                        >
-                          {savingKey === `ai-${cover.id}` && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
-                          Select
-                        </Button>
-                      ) : null}
-                    </div>
-                  );
-                })}
+                {aiCovers.map((cover) => renderAiCoverCard(cover, false))}
               </div>
             </CollapsibleContent>
           </Collapsible>
